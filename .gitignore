@@ -1,0 +1,7 @@
+.idea/
+cmake-build-debug/
+bin/
+CMakeCache.txt
+CMakeFiles/
+*.o
+Makefile
