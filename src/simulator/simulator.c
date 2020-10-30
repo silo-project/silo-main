@@ -54,16 +54,15 @@ static void * thread_main(void *);
 
 
 static void * thread_main(void * p) {
-	printf("debug\n");
 	NODEID i, j;
-	printf("debug\n");
 	struct thread_arg_t * arg = (struct thread_arg_t *)p;
 	
 	while (true)
 	{
 		// waiting thread
-		printf("debug\n");
+		printf("debug in loop\n");
 		pthread_cond_wait(&thread_cond, &thread_mutex);
+		printf("debug after wait\n");
 			
 		// next exec
 		arg->status = true;
@@ -109,6 +108,16 @@ void SendSignal(SENDFORM d, SIGNAL s) {
 	simu_sentlist[d.node->nodeid] = true;
 }
 
+void SimuMakeList() {
+	NODEID i, j;
+	
+	for (i = j = 0; i < NodeGetNumber(); i++) {
+		if (simu_sentlist[i])
+			simu_nextexec[j++] = NodeGetPtr(i);
+		simu_sentlist[i] = 0;
+	}
+}
+
 
 
 int SimuInit() {
@@ -134,15 +143,10 @@ int SimuInit() {
 	pthread_mutex_lock(&thread_mutex); // dummy mutex for thread_main
 	
 	for (i = status = 0; i < thread_number; i++) {
-		printf("debug\n");
 		thread_argptr[i].workid = i;
-		printf("debug\n");
 		thread_argptr[i].status = 0;
-		printf("debug\n");
 		thread_argptr[i].exbuff = (NODE**)malloc(0);
-		printf("debug\n");
 		status += (pthread_create(&thread_id[i], &thread_attr, thread_main, (void*)&thread_argptr[i])) ? 1 : 0; // segmentation fault occur
-		printf("thread created\n");
 	}
 	
 	if (simu_nextexec==NULL || simu_sentlist==NULL || (status!=0))
@@ -171,27 +175,29 @@ int SimuReSize(NODEID nodeid) {
 
 // simulate tick
 int Simulate(void) {
-	NODEID i, status;
-	int s;
+	NODEID i;
+	int status;
 	struct timespec t, u;
+	
+	u.tv_sec  = 0;
+	u.tv_nsec = 0;
 	
 	pthread_cond_broadcast(&thread_cond);
 	
 	while (true) {
-		t.tv_sec  = 0;
-		t.tv_nsec = simu_maxspeed;
-		
 		// waiting for thread
-		while ((s = nanosleep(&t, &u)) != 0)
+		for (t.tv_sec = 0, t.tv_nsec = simu_maxspeed; u.tv_nsec;) {
+			nanosleep(&t, &u);
 			t = u;
+		}
 		for (i = status = 0; i < thread_number; i++)
-			status += (thread_argptr[i].status) ? 0 : 1;
+			status += (thread_argptr[i].status == 2) ? 1 : 0;
 		if (status == thread_number-1)
 			break;
 		else
 			continue;
 	}
-
+	printf("status : %d\n", status);
 	// tick end
 	return 0;
 }

@@ -47,6 +47,7 @@ int main(int argc, char ** argv) {
 	
 	for (i = 0; i < 8; i++) {
 		p = NodeCreate();
+		NodeSetType(p, GateBuffer);
 		NodeUseInpt(p, 1);
 		NodeUseOupt(p, 1);
 		s.node = p;
@@ -55,8 +56,9 @@ int main(int argc, char ** argv) {
 		SendSignal(s, signal);
 	}
 	
-	for (i = 0; i < 1000; i++)
-		Simulate();
+	SimuMakeList();
+	printf("before simulate\n");
+	Simulate();
 	
 	return 0;
 }
