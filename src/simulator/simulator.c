@@ -54,12 +54,15 @@ static void * thread_main(void *);
 
 
 static void * thread_main(void * p) {
+	printf("debug\n");
 	NODEID i, j;
-	struct thread_arg_t * const arg = (struct thread_arg_t *)p;
-
+	printf("debug\n");
+	struct thread_arg_t * arg = (struct thread_arg_t *)p;
+	
 	while (true)
 	{
 		// waiting thread
+		printf("debug\n");
 		pthread_cond_wait(&thread_cond, &thread_mutex);
 			
 		// next exec
@@ -111,13 +114,15 @@ void SendSignal(SENDFORM d, SIGNAL s) {
 int SimuInit() {
 	DEFT_ADDR i;
 	DEFT_ADDR status;
-
+	
 	simu_nextexec = (NODE**)malloc(0);
 	simu_sentlist = (char *)malloc(0);
 	
 	simu_maxspeed = DEFT_NSEC / DEFT_SIM_SPEED;
 	
 	thread_number = DEFT_THREAD_NUMBER;
+	thread_id     = (pthread_t*)malloc(sizeof(pthread_t) * thread_number);
+	thread_argptr = (struct thread_arg_t*)malloc(sizeof(struct thread_arg_t) * thread_number);
 	
 	pthread_attr_init(&thread_attr);
 	pthread_cond_init(&thread_cond, NULL);
@@ -127,12 +132,17 @@ int SimuInit() {
 	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
 	
 	pthread_mutex_lock(&thread_mutex); // dummy mutex for thread_main
-
+	
 	for (i = status = 0; i < thread_number; i++) {
+		printf("debug\n");
 		thread_argptr[i].workid = i;
+		printf("debug\n");
 		thread_argptr[i].status = 0;
+		printf("debug\n");
 		thread_argptr[i].exbuff = (NODE**)malloc(0);
-		status += (pthread_create(&thread_id[i], &thread_attr, thread_main, (void*)&thread_argptr[i])) ? 1 : 0;
+		printf("debug\n");
+		status += (pthread_create(&thread_id[i], &thread_attr, thread_main, (void*)&thread_argptr[i])) ? 1 : 0; // segmentation fault occur
+		printf("thread created\n");
 	}
 	
 	if (simu_nextexec==NULL || simu_sentlist==NULL || (status!=0))

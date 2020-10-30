@@ -1,4 +1,4 @@
-# Install script for directory: /home/rumium/GitHub/silo-newcpp/silo-newc/src
+# Install script for directory: /home/rumium/silo-main/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

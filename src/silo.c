@@ -22,15 +22,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #include <pthread.h>
 
 #include "include/define.h"
-#include "include/node/recycle.h"
+#include "include/signal.h"
+#include "include/node/node.h"
 #include "include/node/node_type.h"
+#include "include/node/recycle.h"
 #include "include/simulator/simulator.h"
 #include "include/gate/gate.h"
 
 int main(int argc, char ** argv) {
 	SimuInit();
+	printf("simulation initialization\n");
 	NodeInit();
+	printf("node initialization\n");
 	RecyInit();
+	printf("recycle(parts of node) initialization\n");
 	
 	NODEID i;
 	SENDFORM s;

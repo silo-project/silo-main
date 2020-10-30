@@ -5,7 +5,7 @@
 #include "../define.h"
 #include "../node/node.h"
 
-#define DEFT_THREAD_NUMBER 8
+#define DEFT_THREAD_NUMBER 1
 #define DEFT_THREAD_MAXNUM 64
 #define DEFT_SIM_SPEED 1000000
 

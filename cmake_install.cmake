@@ -1,4 +1,4 @@
-# Install script for directory: /home/rumium/GitHub/silo-newcpp/silo-newc
+# Install script for directory: /home/rumium/silo-main
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -39,7 +39,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/rumium/silo-newc/src/cmake_install.cmake")
+  include("/home/rumium/silo-main/src/cmake_install.cmake")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/rumium/silo-newc/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/rumium/silo-main/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

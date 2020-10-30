@@ -98,7 +98,7 @@ void RecySetgcOfs(NODEID value) {
 	return;
 }
 void RecyStartgc(NODEID nodeid) {
-	NodeDelete(nodeid);
+	NodeDelete(NodeGetPtr(nodeid));
 	return;
 }
 

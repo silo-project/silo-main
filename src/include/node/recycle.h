@@ -8,7 +8,7 @@ int RecyInit();
 int RecyReSizeStack();
 int RecyStatus(void);
 
-void   RecyPush(NODEID nodeid);
+void   RecyPush(NODEID);
 NODEID RecyPull(void);
 
 void RecySetgcOfs(NODEID nodeid);

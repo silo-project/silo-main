@@ -3,8 +3,9 @@
 
 #include <stdio.h>
 #include "../include/signal.h"
-#include "../node/node.h"
-#include "gate.h"
+#include "../../include/node/node.h"
+#include "../../include/gate/gate.h"
+#include "../../include/simulator/simulator.h"
 
 inline SIGNAL NodeReadInput(NODE * node, PORTID portid) { return node->input[portid]; }
 
@@ -38,7 +39,7 @@ void GateMUL(NODE * node) {
 	c.value = a.value * b.value;
 	c.state = -1;
 
-	SendSignal(node->output[0], c];
+	SendSignal(node->output[0], c);
 }
 void GateDIV(NODE * node) {
 	SIGNAL a, b, c;

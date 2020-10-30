@@ -4,3 +4,7 @@ project(silo-newc C)
 set(CMAKE_VERBOSE_MAKEFILE true)
 
 add_subdirectory(src)
+
+add_compile_options(-lpthread -g)
+
+target_link_libraries(silo-newc -pthread)

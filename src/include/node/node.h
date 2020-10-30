@@ -46,7 +46,7 @@ int NodeReSizeTable(void);
 NODE * NodeCreate();
 void NodeDelete(NODE *);
 
-void NodeRecycle(NODE *);
+void NodeRecycle(NODEID);
 
 void NodeAddPtr(NODE * node);
 
