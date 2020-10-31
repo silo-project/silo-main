@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <time.h>
+#include <errno.h>
 
 #include "../include/define.h"
 #include "../include/node/node.h"
@@ -48,56 +49,37 @@ static pthread_cond_t  simu_cond;
 static pthread_mutex_t simu_mutex;
 static long long       simu_maxspeed; // max simulation rate per second
 
-
-
 static void * thread_main(void *);
+
 
 
 static void * thread_main(void * p) {
 	NODEID i, j;
 	struct thread_arg_t * arg = (struct thread_arg_t *)p;
 	
-	while (true)
-	{
+	while (true) {
+		arg->status = 0;
 		// waiting thread
-		printf("debug in loop\n");
 		pthread_cond_wait(&thread_cond, &thread_mutex);
-		printf("debug after wait\n");
-			
-		// next exec
-		arg->status = true;
-		for (i = 0; (i += thread_number + arg->workid) < simu_nextemax;)
-			simu_nextexec[i]->function(simu_nextexec[i]);
 		
-		// make exec
-		arg->status = 1;
-		for (i = j = 0; (i += thread_number + arg->workid) < NodeGetNumber();) {
+		// process exec
+		for (i = arg->workid; i < simu_nextemax; i += thread_number) {
+			simu_nextexec[i]->function(simu_nextexec[i]);
+		}
+		for (i = arg->workid, j = 0; i < NodeGetNumber(); i += thread_number) {
 			if (simu_sentlist[i])
 				arg->exbuff[j++] = NodeGetPtr(i);
-			simu_sentlist[i] = false;
+			simu_sentlist[i] = 0;
 		}
 		arg->exbfsz = j;
 		
-		// waiting other thread
-		arg->status = 2;
-		while (true) {
-			for (i = j = 0; i < thread_number; i++)
-				j += (thread_argptr[i].status == 2) ? 1 : 0;
-			if (j !=  thread_number-1)
-				pthread_cond_wait(&thread_cond, &thread_mutex);
-			else {
-				pthread_cond_broadcast(&thread_cond);
-				break;
-			}
-		}
-		// get offset
+		arg->status = 1;
+		pthread_cond_wait(&thread_cond, &thread_mutex);
+		// get offset;
 		for (i = j = 0; i < arg->workid; i++)
 			j += thread_argptr[i].exbfsz;
-		// push exec
 		for (i = 0; i < arg->exbfsz; i++)
 			simu_nextexec[j+i] = arg->exbuff[i];
-		
-		arg->status = 0;
 	}
 	
 	return (void *)NULL; // dummy
@@ -114,8 +96,9 @@ void SimuMakeList() {
 	for (i = j = 0; i < NodeGetNumber(); i++) {
 		if (simu_sentlist[i])
 			simu_nextexec[j++] = NodeGetPtr(i);
-		simu_sentlist[i] = 0;
+		simu_sentlist[i] = false;
 	}
+	simu_nextemax = j;
 }
 
 
@@ -124,8 +107,8 @@ int SimuInit() {
 	DEFT_ADDR i;
 	DEFT_ADDR status;
 	
-	simu_nextexec = (NODE**)malloc(0);
-	simu_sentlist = (char *)malloc(0);
+	simu_nextexec = (NODE**)malloc(BASICMEM);
+	simu_sentlist = (char *)malloc(BASICMEM);
 	
 	simu_maxspeed = DEFT_NSEC / DEFT_SIM_SPEED;
 	
@@ -137,6 +120,7 @@ int SimuInit() {
 	pthread_cond_init(&thread_cond, NULL);
 	pthread_mutex_init(&thread_mutex, NULL);
 	pthread_cond_init(&simu_cond, NULL);
+	pthread_mutex_init(&simu_mutex, NULL);
 	
 	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
 	
@@ -144,10 +128,12 @@ int SimuInit() {
 	
 	for (i = status = 0; i < thread_number; i++) {
 		thread_argptr[i].workid = i;
-		thread_argptr[i].status = 0;
-		thread_argptr[i].exbuff = (NODE**)malloc(0);
+		thread_argptr[i].exbuff = (NODE**)malloc(4096);
 		status += (pthread_create(&thread_id[i], &thread_attr, thread_main, (void*)&thread_argptr[i])) ? 1 : 0; // segmentation fault occur
+		printf("thread created, workid : %d\n", thread_argptr[i].workid);
 	}
+	
+	printf("thread number : %d\n", thread_number);
 	
 	if (simu_nextexec==NULL || simu_sentlist==NULL || (status!=0))
 		return -1;
@@ -175,29 +161,29 @@ int SimuReSize(NODEID nodeid) {
 
 // simulate tick
 int Simulate(void) {
-	NODEID i;
-	int status;
-	struct timespec t, u;
+	NODEID i, j;
+	long long response;
 	
-	u.tv_sec  = 0;
-	u.tv_nsec = 0;
+	int pipe;
 	
-	pthread_cond_broadcast(&thread_cond);
+	struct timespec t;
+	t.tv_nsec = simu_maxspeed;
+	t.tv_sec  = 0;
 	
-	while (true) {
-		// waiting for thread
-		for (t.tv_sec = 0, t.tv_nsec = simu_maxspeed; u.tv_nsec;) {
-			nanosleep(&t, &u);
-			t = u;
+	// waiting for thread
+	for (j = response = pipe = 0; true; response++) {
+		nanosleep(&t, NULL);
+		if (j == thread_number) {
+			pipe++;
+			pthread_cond_broadcast(&thread_cond);
+			if (pipe == 2)
+				break;
 		}
-		for (i = status = 0; i < thread_number; i++)
-			status += (thread_argptr[i].status == 2) ? 1 : 0;
-		if (status == thread_number-1)
-			break;
-		else
-			continue;
+		for (i = j = 0; i < thread_number; i++)
+			j += (thread_argptr[i].status == pipe) ? 1 : 0;
 	}
-	printf("status : %d\n", status);
+	for (i = simu_nextemax = 0; i < thread_number; i++)
+		simu_nextemax += thread_argptr[i].exbfsz;
 	// tick end
 	return 0;
 }

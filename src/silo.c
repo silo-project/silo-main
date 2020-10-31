@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
+#include <time.h>
 
 #include "include/define.h"
 #include "include/signal.h"
@@ -42,10 +42,12 @@ int main(int argc, char ** argv) {
 	SIGNAL signal;
 	NODE * p;
 	
+	clock_t st, ed;
+	
 	s.portid = 0;
 	signal.state = -1;
 	
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < 80; i++) {
 		p = NodeCreate();
 		NodeSetType(p, GateBuffer);
 		NodeUseInpt(p, 1);
@@ -54,11 +56,25 @@ int main(int argc, char ** argv) {
 		NodeSetOupt(p, 0, s);
 		signal.value = i;
 		SendSignal(s, signal);
+		printf("node created : %d\n", (int)i);
 	}
 	
 	SimuMakeList();
 	printf("before simulate\n");
-	Simulate();
+	
+	st = clock();
+	
+	for (i = 0; i < 1000000; i++) {
+		if (Simulate()) {
+			break;
+		}
+		if (i / 1000)
+			printf("Thousand End : %d\n", ((int)i) / 1000);
+	}
+	printf("Simulate count : %d\n", (int)i);
+	
+	ed = clock();
+	printf("Time : %.3f\n", (float)(ed - st)/CLOCKS_PER_SEC);
 	
 	return 0;
 }
