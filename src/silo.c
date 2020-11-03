@@ -37,10 +37,19 @@ int main(int argc, char ** argv) {
 	RecyInit();
 	printf("recycle(parts of node) initialization\n");
 	
+	int thread_num;
+	
+	printf("Input Thread Number : ");
+	scanf("%d", &thread_num);
+	
+	thread_set(thread_num);
+	
 	NODEID i;
 	SENDFORM s;
 	SIGNAL signal;
 	NODE * p;
+	
+	int status = 0;
 	
 	clock_t st, ed;
 	
@@ -65,16 +74,20 @@ int main(int argc, char ** argv) {
 	st = clock();
 	
 	for (i = 0; i < 1000000; i++) {
-		if (Simulate()) {
+		if (status = Simulate()) {
 			break;
 		}
-		if (i / 1000)
+		if (i / 1000 && (i % 1000 == 0))
 			printf("Thousand End : %d\n", ((int)i) / 1000);
 	}
 	printf("Simulate count : %d\n", (int)i);
 	
 	ed = clock();
+	printf("debug\n");
 	printf("Time : %.3f\n", (float)(ed - st)/CLOCKS_PER_SEC);
+	
+	if (status < 0)
+		printf("Simulation error : thread is Not Response error\n");
 	
 	return 0;
 }

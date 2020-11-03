@@ -5,11 +5,12 @@
 #include "../define.h"
 #include "../node/node.h"
 
-#define DEFT_THREAD_NUMBER 32
+#define DEFT_THREAD_NUMBER 4
 #define DEFT_THREAD_MAXNUM 64
 #define DEFT_SIM_SPEED 1000000
-
 #define DEFT_NSEC 1000000000 // don't modifing!
+
+#define DEFT_SIM_MAXRES 500 // max response 
 
 int SimuInit(void);
 
@@ -23,7 +24,6 @@ void SendInteger(SENDFORM d, DEFT_WORD s);
 
 void SimuMakeList();
 
-
-
+int thread_set(int);
 
 #endif
