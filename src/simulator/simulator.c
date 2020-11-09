@@ -71,6 +71,7 @@ int thread_set(int n) {
 		q = realloc((void*)thread_id,     sizeof(pthread_t)           * n);
 		if (p==NULL || q==NULL) {
 			printf("thread set error.\n");
+            fflush(stdout);
 			return -1;
 		}
 		thread_argptr = p;
@@ -79,17 +80,20 @@ int thread_set(int n) {
 			thread_argptr[i].workid = i;
 			status += ( pthread_create(&thread_id[i], &thread_attr, thread_main, (void*)&thread_argptr[i]) ) ? 1 : 0;
 			printf("thread created, workid : %d\n", thread_argptr[i].workid);
+            fflush(stdout);
 		}
 	}
 	else if (n < thread_number) { // delete thread
 		for (i = n, status = 0; i < thread_number; i++) {
 			status += ( pthread_cancel(thread_id[i]) ) ? 1 : 0;
 			printf("thread cancelled, workid : %d\n", thread_argptr[i].workid);
+            fflush(stdout);
 		}
 		p = realloc((void*)thread_argptr, sizeof(struct thread_arg_t) * n);
 		q = realloc((void*)thread_id,     sizeof(pthread_t)           * n);
 		if (p==NULL || q==NULL) {
 			printf("thread set error.\n");
+            fflush(stdout);
 			return -1;
 		}
 		thread_argptr = p;
@@ -104,6 +108,8 @@ int thread_set(int n) {
 }
 int thread_get() { return thread_number; }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
 static void * thread_main(void * p) {
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	NODEID i;
@@ -112,12 +118,15 @@ static void * thread_main(void * p) {
 	while (true) {
 		pthread_cond_wait(&thread_cond, &thread_mutex);
 		printf("thread start\n");
+        fflush(stdout);
 		for (i = arg->workid; i < simu_nextemax; i += thread_number)
 			simu_nextexec[i]->function(simu_nextexec[i]);
 		
 		printf("before critical section\n");
+        fflush(stdout);
 		pthread_mutex_lock(&thread_mutex); // critical section
 		printf("critical section\n");
+        fflush(stdout);
 		if (simu_needmake)
 			simu_nextemax = 0;
 		
@@ -131,11 +140,13 @@ static void * thread_main(void * p) {
 		if (simu_endcount == thread_number) {
 			pthread_cond_signal(&simu_cond);
 			printf("work end.\n");
+            fflush(stdout);
 		}
 	}
 	
 	return (void *)NULL; // dummy
 }
+#pragma clang diagnostic pop
 
 
 void SendSignal(SENDFORM d, SIGNAL s) {
@@ -171,6 +182,7 @@ int SimuInit() {
 	thread_set(DEFT_THREAD_NUMBER);
 	
 	printf("thread number : %d\n", thread_number);
+    fflush(stdout);
 	
 	if (simu_nextexec==NULL || simu_sentlist==NULL)
 		return -1;
@@ -200,6 +212,7 @@ int Simulate(void) {
 	
 	pthread_cond_broadcast(&thread_cond);
 	printf("notify_all\n");
+    fflush(stdout);
 	pthread_cond_wait(&simu_cond, &simu_mutex);
 	
 	simu_needmake = false;
