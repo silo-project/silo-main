@@ -60,6 +60,10 @@ NODE * NodeCreate() {
 	
 	node_list[nodeid].nodeid   = nodeid;
 	node_list[nodeid].storage  = NULL;
+    node_list[nodeid].attribute= NULL;
+    node_list[nodeid].input    = NULL;
+    node_list[nodeid].output   = NULL;
+
 
 	return &node_list[nodeid];
 }

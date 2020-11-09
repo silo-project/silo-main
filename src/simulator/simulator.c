@@ -49,9 +49,9 @@ static int thread_init() {
 	
 	pthread_attr_init(&thread_attr);
 	pthread_cond_init(&thread_cond, NULL);
-	pthread_mutex_init(&thread_mutex, &PTHREAD_MUTEX_NORMAL);
+	pthread_mutex_init(&thread_mutex, NULL);
 	pthread_cond_init(&simu_cond, NULL);
-	pthread_mutex_init(&simu_mutex, &PTHREAD_MUTEX_NORMAL);
+	pthread_mutex_init(&simu_mutex, NULL);
 	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
 	
 	thread_argptr = (struct thread_arg_t*)malloc(0);
