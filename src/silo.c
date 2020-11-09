@@ -32,14 +32,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 int main(int argc, char ** argv) {
 	SimuInit();
 	printf("simulation initialization\n");
+    fflush(stdout);
 	NodeInit();
 	printf("node initialization\n");
+    fflush(stdout);
 	RecyInit();
 	printf("recycle(parts of node) initialization\n");
+    fflush(stdout);
 	
 	int thread_num;
 	
 	printf("Input Thread Number : ");
+    fflush(stdout);
 	scanf("%d", &thread_num);
 	
 	thread_set(thread_num);
@@ -66,10 +70,12 @@ int main(int argc, char ** argv) {
 		signal.value = i;
 		SendSignal(s, signal);
 		printf("node created : %d\n", (int)i);
+        fflush(stdout);
 	}
 	
 	SimuMakeList();
 	printf("before simulate\n");
+    fflush(stdout);
 	
 	st = clock();
 	
@@ -77,17 +83,23 @@ int main(int argc, char ** argv) {
 		if (status = Simulate()) {
 			break;
 		}
-		if (i / 1000 && (i % 1000 == 0))
-			printf("Thousand End : %d\n", ((int)i) / 1000);
+		if (i / 1000 && (i % 1000 == 0)) {
+            printf("Thousand End : %d\n", ((int) i) / 1000);
+            fflush(stdout);
+        }
 	}
 	printf("Simulate count : %d\n", (int)i);
+    fflush(stdout);
 	
 	ed = clock();
 	printf("debug\n");
 	printf("Time : %.3f\n", (float)(ed - st)/CLOCKS_PER_SEC);
+    fflush(stdout);
 	
-	if (status < 0)
-		printf("Simulation error : thread is Not Response error\n");
+	if (status < 0) {
+        printf("Simulation error : thread is Not Response error\n");
+        fflush(stdout);
+    }
 	
 	return 0;
 }
