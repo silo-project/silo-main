@@ -79,11 +79,11 @@ int main(int argc, char ** argv) {
 		}
 		if (i / 1000 && (i % 1000 == 0))
 			printf("Thousand End : %d\n", ((int)i) / 1000);
+		printf("tick end\n");
 	}
 	printf("Simulate count : %d\n", (int)i);
 	
 	ed = clock();
-	printf("debug\n");
 	printf("Time : %.3f\n", (float)(ed - st)/CLOCKS_PER_SEC);
 	
 	if (status < 0)

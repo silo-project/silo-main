@@ -28,9 +28,6 @@ int NodeInit() {
 	else
 		return 0;
 }
-
-
-
 int NodeReSize() {
 	DEFT_ADDR n;
 	NODE * p;
@@ -49,8 +46,6 @@ int NodeReSize() {
 		return 0;
 	}
 }
-
-
 
 NODE * NodeCreate() {
 	NODEID nodeid;
@@ -106,7 +101,8 @@ NODEID NodeGetID() {
 	}
 }
 
-NODEID NodeGetNumber() { return node_last; }
+NODEID NodeGetNumber() { return node_number; }
+NODEID NodeGetLastID() { return node_last;   }
 NODE * NodeGetPtr(NODEID nodeid) { return &node_list[nodeid]; }
 
 #endif

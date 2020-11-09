@@ -52,6 +52,7 @@ void NodeAddPtr(NODE * node);
 
 NODEID NodeGetID(); // get a usable(creatable) nodeid
 NODEID NodeGetNumber(); // get the current valid node count
+NODEID NodeGetLastID();
 NODE * NodeGetPtr(NODEID nodeid);
 
 

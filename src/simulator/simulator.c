@@ -22,21 +22,19 @@ struct thread_arg_t {
 	2 : makeexec
 	3 : pushexec
 	*/
-	NODE ** exbuff; // execution buffer
-	NODEID  exbfsz; // size of buffer
 };
 
 static int         thread_number;
 static pthread_t * thread_id;
 static pthread_attr_t  thread_attr;
 static pthread_cond_t  thread_cond;
-static pthread_mutex_t thread_mutex; // dummy
+static pthread_mutex_t thread_mutex;
 static struct thread_arg_t * thread_argptr;
 
-static NODE **         simu_nextexec;
-static NODEID          simu_nextemax;
-static char *          simu_sentlist;
-
+static NODE ** simu_nextexec;
+static NODEID  simu_nextemax;
+static char *  simu_sentlist;
+static int     simu_endcount;
 
 static pthread_cond_t  simu_cond;
 static pthread_mutex_t simu_mutex;
@@ -48,19 +46,19 @@ static void * thread_main(void *);
 
 
 static int thread_init() {
+	
+	pthread_attr_init(&thread_attr);
+	pthread_cond_init(&thread_cond, NULL);
+	pthread_mutex_init(&thread_mutex, &PTHREAD_MUTEX_NORMAL);
+	pthread_cond_init(&simu_cond, NULL);
+	pthread_mutex_init(&simu_mutex, &PTHREAD_MUTEX_NORMAL);
+	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
+	
 	thread_argptr = (struct thread_arg_t*)malloc(0);
 	thread_id = (pthread_t*)malloc(0);
 	
 	if (thread_argptr==NULL || thread_id==NULL)
 		return -1;
-	
-	pthread_attr_init(&thread_attr);
-	pthread_cond_init(&thread_cond, NULL);
-	pthread_mutex_init(&thread_mutex, NULL);
-	pthread_cond_init(&simu_cond, NULL);
-	pthread_mutex_init(&simu_mutex, NULL);
-	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
-	
 	return 0;
 }
 // work in progress
@@ -71,26 +69,29 @@ int thread_set(int n) {
 	if (n > thread_number) { // create thread
 		p = realloc((void*)thread_argptr, sizeof(struct thread_arg_t) * n);
 		q = realloc((void*)thread_id,     sizeof(pthread_t)           * n);
-		if (p==NULL || q==NULL)
+		if (p==NULL || q==NULL) {
+			printf("thread set error.\n");
 			return -1;
+		}
 		thread_argptr = p;
 		thread_id     = q;
 		for (i = thread_number, status = 0; i < n; i++) {
 			thread_argptr[i].workid = i;
-			thread_argptr[i].exbuff = (NODE**)malloc(4096);
-			status += (pthread_create(&thread_id[i], &thread_attr, thread_main, (void*)&thread_argptr[i])) ? 1 : 0;
+			status += ( pthread_create(&thread_id[i], &thread_attr, thread_main, (void*)&thread_argptr[i]) ) ? 1 : 0;
+			printf("thread created, workid : %d\n", thread_argptr[i].workid);
 		}
 	}
 	else if (n < thread_number) { // delete thread
 		for (i = n, status = 0; i < thread_number; i++) {
-			status += (pthread_cancel(thread_id[i])) ? 1 : 0;
-			free((void*)thread_argptr[i].exbuff);
-			printf("thread cancelled, workid : %d, thread id : %d\n", thread_argptr[i].workid, (int)thread_id[i]);
+			status += ( pthread_cancel(thread_id[i]) ) ? 1 : 0;
+			printf("thread cancelled, workid : %d\n", thread_argptr[i].workid);
 		}
 		p = realloc((void*)thread_argptr, sizeof(struct thread_arg_t) * n);
 		q = realloc((void*)thread_id,     sizeof(pthread_t)           * n);
-		if (p==NULL || q==NULL)
+		if (p==NULL || q==NULL) {
+			printf("thread set error.\n");
 			return -1;
+		}
 		thread_argptr = p;
 		thread_id     = q;
 	}
@@ -105,34 +106,32 @@ int thread_get() { return thread_number; }
 
 static void * thread_main(void * p) {
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	NODEID i, j;
+	NODEID i;
 	struct thread_arg_t * arg = (struct thread_arg_t *)p;
 	
 	while (true) {
-		arg->status = 0;
-		// waiting thread
 		pthread_cond_wait(&thread_cond, &thread_mutex);
-		
-		// process exec
-		for (i = arg->workid; i < simu_nextemax; i += thread_number) {
-			printf("Index : %d\n", (int)i);
+		printf("thread start\n");
+		for (i = arg->workid; i < simu_nextemax; i += thread_number)
 			simu_nextexec[i]->function(simu_nextexec[i]);
-		}
 		
-		for (i = arg->workid, j = 0; i < NodeGetNumber(); i += thread_number) {
+		printf("before critical section\n");
+		pthread_mutex_lock(&thread_mutex); // critical section
+		printf("critical section\n");
+		if (simu_needmake)
+			simu_nextemax = 0;
+		
+		for (i = arg->workid; i < simu_nextemax; i += thread_number) {
 			if (simu_sentlist[i])
-				arg->exbuff[j++] = NodeGetPtr(i);
-			simu_sentlist[i] = 0;
+				simu_nextexec[simu_nextemax++] = NodeGetPtr(i);
+			simu_sentlist[i] = false;
 		}
-		arg->exbfsz = j;
+		simu_endcount++;
 		
-		arg->status = 1;
-		pthread_cond_wait(&thread_cond, &thread_mutex);
-		// get offset;
-		for (i = j = 0; i < arg->workid; i++)
-			j += thread_argptr[i].exbfsz;
-		for (i = 0; i < arg->exbfsz; i++)
-			simu_nextexec[j+i] = arg->exbuff[i];
+		if (simu_endcount == thread_number) {
+			pthread_cond_signal(&simu_cond);
+			printf("work end.\n");
+		}
 	}
 	
 	return (void *)NULL; // dummy
@@ -142,7 +141,6 @@ static void * thread_main(void * p) {
 void SendSignal(SENDFORM d, SIGNAL s) {
 	d.node->input[d.portid] = s;
 	simu_sentlist[d.node->nodeid] = true;
-	simu_needmake = true;
 }
 
 void SimuMakeList() {
@@ -154,6 +152,7 @@ void SimuMakeList() {
 		simu_sentlist[i] = false;
 	}
 	simu_nextemax = j;
+	simu_needmake = false;
 }
 
 int SimuInit() {
@@ -162,10 +161,11 @@ int SimuInit() {
 	simu_nextexec = (NODE**)malloc(BASICMEM);
 	simu_nextemax = 0;
 	simu_sentlist = (char *)malloc(BASICMEM);
-	
 	simu_maxspeed = DEFT_NSEC / DEFT_SIM_SPEED;
-	
 	simu_needmake = true;
+	simu_endcount = 0;
+	
+	thread_number = 0;
 	
 	thread_init();
 	thread_set(DEFT_THREAD_NUMBER);
@@ -195,41 +195,13 @@ int SimuReSize(NODEID nodeid) {
 	return 0;
 }
 
-// simulate tick
 int Simulate(void) {
-	NODEID i, j;
-	long long response;
+	simu_needmake = true;
 	
-	int pipe;
-	const int maxpipe = 2;
+	pthread_cond_broadcast(&thread_cond);
+	printf("notify_all\n");
+	pthread_cond_wait(&simu_cond, &simu_mutex);
 	
-	struct timespec t;
-	t.tv_nsec = simu_maxspeed;
-	t.tv_sec  = 0;
-	
-	pthread_cond_broadcast(&thread_cond); // start simulation
-	
-	// waiting for thread
-	for (j = response = 0, pipe = 1; true; response++) {
-		nanosleep(&t, NULL);
-		for (i = j = 0; i < thread_number; i++)
-			j += (thread_argptr[i].status == pipe) ? 1 : 0;
-		if (j == thread_number) {
-			pipe++;
-			pthread_cond_broadcast(&thread_cond);
-			if (pipe == maxpipe)
-				break;
-		}
-		if (response > DEFT_SIM_MAXRES) {
-			printf("Thread is not response, trying thread restart...\n");
-			pthread_cond_broadcast(&thread_cond);
-		}
-		if (response > DEFT_SIM_MAXRES*2)
-			return -1;
-	}
-	for (i = simu_nextemax = 0; i < thread_number; i++)
-		simu_nextemax += thread_argptr[i].exbfsz;
-	// tick end
 	simu_needmake = false;
 	return 0;
 }
