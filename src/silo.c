@@ -68,7 +68,7 @@ int main(int argc, char ** argv) {
 		s.node = p;
 		NodeSetOupt(p, 0, s);
 		signal.value = i;
-		SendSignal(s, signal);
+		Transfer(s, signal);
 		printf("node created : %d\n", (int)i);
         fflush(stdout);
 	}

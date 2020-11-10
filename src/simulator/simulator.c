@@ -8,6 +8,7 @@
 #include <time.h>
 #include <signal.h>
 #include <errno.h>
+#include <semaphore.h>
 
 #include "../include/define.h"
 #include "../include/node/node.h"
@@ -28,8 +29,10 @@ static int         thread_number;
 static pthread_t * thread_id;
 static pthread_attr_t  thread_attr;
 static pthread_cond_t  thread_cond;
+static pthread_mutex_t thread_mtx_dummy;
 static pthread_mutex_t thread_mutex;
 static struct thread_arg_t * thread_argptr;
+static sem_t thread_semp;
 
 static NODE ** simu_nextexec;
 static NODEID  simu_nextemax;
@@ -42,16 +45,16 @@ static long long       simu_maxspeed; // max simulation rate per second
 static bool            simu_needmake; // if true, must do makelist
 
 static int    thread_init(void);
+static int    thread_wait(void);
 static void * thread_main(void *);
 
 
+
 static int thread_init() {
-	
 	pthread_attr_init(&thread_attr);
 	pthread_cond_init(&thread_cond, NULL);
+	pthread_mutex_init(&thread_mtx_dummy, NULL);
 	pthread_mutex_init(&thread_mutex, NULL);
-	pthread_cond_init(&simu_cond, NULL);
-	pthread_mutex_init(&simu_mutex, NULL);
 	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
 	
 	thread_argptr = (struct thread_arg_t*)malloc(0);
@@ -112,54 +115,73 @@ int thread_get() { return thread_number; }
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 static void * thread_main(void * p) {
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	NODEID i;
+	NODEID i, j, k;
 	struct thread_arg_t * arg = (struct thread_arg_t *)p;
 	
 	while (true) {
-		pthread_cond_wait(&thread_cond, &thread_mutex);
+		pthread_cond_wait(&thread_cond, &thread_mtx_dummy);
 		printf("thread start\n");
         fflush(stdout);
-		for (i = arg->workid; i < simu_nextemax; i += thread_number)
-			simu_nextexec[i]->function(simu_nextexec[i]);
-		
-		printf("before critical section\n");
-        fflush(stdout);
-		pthread_mutex_lock(&thread_mutex); // critical section
-		printf("critical section\n");
-        fflush(stdout);
-		if (simu_needmake)
-			simu_nextemax = 0;
-		
+        
+        // next exec
 		for (i = arg->workid; i < simu_nextemax; i += thread_number) {
-			if (simu_sentlist[i])
-				simu_nextexec[simu_nextemax++] = NodeGetPtr(i);
-			simu_sentlist[i] = false;
+			printf("pointer(workid : %d, index : %d) : %p\n", arg->workid, (int)i, simu_nextexec[i]);
+			simu_nextexec[i]->function(simu_nextexec[i]);
 		}
-		simu_endcount++;
 		
-		if (simu_endcount == thread_number) {
-			pthread_cond_signal(&simu_cond);
-			printf("work end.\n");
-            fflush(stdout);
+		thread_wait();
+		
+		// make exec
+		for (i = arg->workid; i < NodeGetLastID(); i += thread_number) {
+			if (simu_sentlist[i]) {
+				simu_sentlist[i] = false;
+				simu_nextexec[i] = NodeGetPtr(i);
+			}
+			else {
+				simu_nextexec[i] = NULL;
+			}
 		}
+		
+		thread_wait();
+		
+		if (thread_wait())
+			pthread_cond_signal(&simu_cond);
 	}
 	
 	return (void *)NULL; // dummy
 }
 #pragma clang diagnostic pop
 
+static int thread_wait() {
+	pthread_mutex_lock(&thread_mutex);
+	if (++simu_endcount == thread_number) {
+		simu_endcount = 0;
+		pthread_mutex_unlock(&thread_mutex);
+		pthread_cond_broadcast(&thread_cond);
+		return 1;
+	}
+	else {
+		pthread_cond_wait(&thread_cond, &thread_mutex);
+		return 0;
+	}
+}
+
 
 void SendSignal(SENDFORM d, SIGNAL s) {
 	d.node->input[d.portid] = s;
 	simu_sentlist[d.node->nodeid] = true;
+}
+void Transfer(SENDFORM d, SIGNAL s) {
+	d.node->input[d.portid] = s;
+	simu_sentlist[d.node->nodeid] = true;
+	simu_needmake = true;
 }
 
 void SimuMakeList() {
 	NODEID i, j;
 	
 	for (i = j = 0; i < NodeGetNumber(); i++) {
-		if (simu_sentlist[i])
-			simu_nextexec[j++] = NodeGetPtr(i);
+		simu_nextexec[j++] = (simu_sentlist[i]) ? NodeGetPtr(i) : NULL;
 		simu_sentlist[i] = false;
 	}
 	simu_nextemax = j;
@@ -168,6 +190,9 @@ void SimuMakeList() {
 
 int SimuInit() {
 	DEFT_ADDR i;
+
+	pthread_cond_init(&simu_cond, NULL);
+	pthread_mutex_init(&simu_mutex, NULL);
 	
 	simu_nextexec = (NODE**)malloc(BASICMEM);
 	simu_nextemax = 0;
@@ -211,8 +236,7 @@ int Simulate(void) {
 	simu_needmake = true;
 	
 	pthread_cond_broadcast(&thread_cond);
-	printf("notify_all\n");
-    fflush(stdout);
+	
 	pthread_cond_wait(&simu_cond, &simu_mutex);
 	
 	simu_needmake = false;

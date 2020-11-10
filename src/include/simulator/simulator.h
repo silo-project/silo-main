@@ -19,8 +19,9 @@ int SimuReSize(NODEID);
 int SimuReset(void);
 int Simulate(void);
 
-void SendSignal (SENDFORM d, SIGNAL s);
-void SendInteger(SENDFORM d, DEFT_WORD s);
+void SendSignal (SENDFORM, SIGNAL);
+void Transfer(SENDFORM, SIGNAL);
+void SendInteger(SENDFORM, DEFT_WORD);
 
 void SimuMakeList();
 
