@@ -32,20 +32,22 @@ static pthread_cond_t  thread_cond;
 static pthread_mutex_t thread_mtx_dummy;
 static pthread_mutex_t thread_mutex;
 static struct thread_arg_t * thread_argptr;
-static sem_t thread_semp;
+static int thread_endcount;
 
 static NODE ** simu_nextexec;
 static NODEID  simu_nextemax;
 static char *  simu_sentlist;
-static int     simu_endcount;
+static volatile int     simu_endcount;
 
 static pthread_cond_t  simu_cond;
 static pthread_mutex_t simu_mutex;
-static long long       simu_maxspeed; // max simulation rate per second
-static bool            simu_needmake; // if true, must do makelist
+static long long simu_maxspeed; // max simulation rate per second
+static bool simu_needmake; // if true, must do makelist
+static volatile bool simu_status;
 
 static int    thread_init(void);
-static int    thread_wait(void);
+static void   thread_sync(void);
+static void   thread_wait(void);
 static void * thread_main(void *);
 
 
@@ -111,59 +113,69 @@ int thread_set(int n) {
 }
 int thread_get() { return thread_number; }
 
+// don't change
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
+
+pthread_t thread_debug_id;
+
+static void * thread_debug(void * p) {
+	while (true) {
+		sleep(5);
+		printf("simu_status : %d\n", simu_status);
+		printf("thread_endcount : %d\n", thread_endcount);
+	}
+}
+
 static void * thread_main(void * p) {
+	long long response;
+	
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	NODEID i, j, k;
 	struct thread_arg_t * arg = (struct thread_arg_t *)p;
 	
 	while (true) {
-		pthread_cond_wait(&thread_cond, &thread_mtx_dummy);
-		printf("thread start\n");
-        fflush(stdout);
-        
-        // next exec
-		for (i = arg->workid; i < simu_nextemax; i += thread_number) {
-			printf("pointer(workid : %d, index : %d) : %p\n", arg->workid, (int)i, simu_nextexec[i]);
-			simu_nextexec[i]->function(simu_nextexec[i]);
-		}
-		
 		thread_wait();
+		thread_endcount = 0;
+        // next exec
+		for (i = arg->workid; i < simu_nextemax; i += thread_number)
+			simu_nextexec[i]->function(simu_nextexec[i]);
+		
+		thread_sync();
+		thread_endcount = 0;
 		
 		// make exec
-		for (i = arg->workid; i < NodeGetLastID(); i += thread_number) {
+		for (i = j = arg->workid; i < NodeGetLastID(); i += thread_number, j += thread_number) {
 			if (simu_sentlist[i]) {
 				simu_sentlist[i] = false;
-				simu_nextexec[i] = NodeGetPtr(i);
+				simu_nextexec[j] = NodeGetPtr(i);
 			}
-			else {
-				simu_nextexec[i] = NULL;
-			}
+			else
+				simu_nextexec[j] = NULL;
 		}
-		
-		thread_wait();
-		
-		if (thread_wait())
-			pthread_cond_signal(&simu_cond);
 	}
 	
 	return (void *)NULL; // dummy
 }
+
+// don't change
 #pragma clang diagnostic pop
 
-static int thread_wait() {
+static void thread_sync() {
 	pthread_mutex_lock(&thread_mutex);
-	if (++simu_endcount == thread_number) {
-		simu_endcount = 0;
-		pthread_mutex_unlock(&thread_mutex);
+	if (++thread_endcount == thread_number)
 		pthread_cond_broadcast(&thread_cond);
-		return 1;
-	}
-	else {
+	else
 		pthread_cond_wait(&thread_cond, &thread_mutex);
-		return 0;
-	}
+	pthread_mutex_unlock(&thread_mutex);
+}
+static void thread_wait() {
+	pthread_mutex_lock(&thread_mutex);
+	if (++thread_endcount == thread_number)
+		pthread_cond_signal(&simu_cond);
+	else
+		pthread_cond_wait(&thread_cond, &thread_mutex);
+	pthread_mutex_unlock(&thread_mutex);
 }
 
 
@@ -193,14 +205,15 @@ int SimuInit() {
 
 	pthread_cond_init(&simu_cond, NULL);
 	pthread_mutex_init(&simu_mutex, NULL);
+	pthread_create(&thread_debug_id, NULL, thread_debug, NULL);
 	
 	simu_nextexec = (NODE**)malloc(BASICMEM);
 	simu_nextemax = 0;
 	simu_sentlist = (char *)malloc(BASICMEM);
 	simu_maxspeed = DEFT_NSEC / DEFT_SIM_SPEED;
 	simu_needmake = true;
-	simu_endcount = 0;
 	
+	thread_endcount = 0;
 	thread_number = 0;
 	
 	thread_init();
@@ -233,11 +246,23 @@ int SimuReSize(NODEID nodeid) {
 }
 
 int Simulate(void) {
+	NODEID i, j;
+	
 	simu_needmake = true;
 	
 	pthread_cond_broadcast(&thread_cond);
-	
 	pthread_cond_wait(&simu_cond, &simu_mutex);
+	
+	
+	for (i = j = 0; i < NodeGetNumber();) {
+		while (simu_nextexec[i++] != NULL && i < NodeGetLastID())
+			;
+		j = i;
+		while (simu_nextexec[j++] == NULL && j < NodeGetLastID())
+			;
+		simu_nextexec[i] = simu_nextexec[j];
+		simu_nextexec[j] = NULL;
+	}
 	
 	simu_needmake = false;
 	return 0;

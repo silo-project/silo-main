@@ -20,6 +20,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "include/define.h"
 #include "include/signal.h"
@@ -83,9 +84,6 @@ int main(int argc, char ** argv) {
 		if (status = Simulate()) {
 			break;
 		}
-		if (i / 1000 && (i % 1000 == 0))
-			printf("Thousand End : %d\n", ((int)i) / 1000);
-		printf("tick end\n");
 		if (i / 1000 && (i % 1000 == 0)) {
             printf("Thousand End : %d\n", ((int) i) / 1000);
             fflush(stdout);
