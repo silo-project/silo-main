@@ -24,7 +24,6 @@ struct thread_arg_t {
 	3 : pushexec
 	*/
 };
-int debug;
 static int         thread_number;
 static pthread_t * thread_id;
 static pthread_attr_t  thread_attr;
@@ -37,6 +36,8 @@ static volatile int thread_endcount;
 static NODE ** simu_nextexec;
 static NODEID  simu_nextemax;
 static char *  simu_sentlist;
+static int     simu_pipeline;
+static pthread_cond_t  simu_chkstate;
 
 static pthread_cond_t  simu_cond;
 static pthread_mutex_t simu_mutex;
@@ -46,6 +47,7 @@ static volatile bool simu_status;
 static int    thread_init(void);
 static void * thread_main(void *);
 static void * thread_timer(void *);
+static void   simu_signal(void);
 
 
 
@@ -78,8 +80,6 @@ int thread_set(int n) {
 		}
 		thread_argptr = p;
 		thread_id     = q;
-		if (thread_endcount)
-			thread_endcount = n - thread_endcount;
 		for (i = thread_number, status = 0; i < n; i++) {
 			thread_argptr[i].workid = i;
 			status += ( pthread_create(&thread_id[i], &thread_attr, thread_main, (void*)&thread_argptr[i]) ) ? 1 : 0;
@@ -107,6 +107,7 @@ int thread_set(int n) {
 		return -1;
 	
 	thread_number = n;
+	simu_pipeline = 1;
 		
 	return status;
 }
@@ -127,6 +128,7 @@ static void * thread_debug(void * p) {
 
 static void * thread_main(void * p) {
 	NODEID i, j;
+	int pipe;
 	struct thread_arg_t * arg = (struct thread_arg_t *)p;
 	
 //	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
@@ -137,7 +139,8 @@ static void * thread_main(void * p) {
 		if (--thread_endcount)
 			pthread_cond_wait(&thread_cond, &thread_mutex);
 		else {
-			pthread_cond_signal(&simu_cond);
+			simu_signal();
+			pthread_mutex_unlock(&simu_mutex);
 			pthread_cond_wait(&thread_cond, &thread_mutex);
 		}
 		pthread_mutex_unlock(&thread_mutex);
@@ -145,16 +148,6 @@ static void * thread_main(void * p) {
         // next exec
 		for (i = arg->workid; i < simu_nextemax; i += thread_number)
 			simu_nextexec[i]->function(simu_nextexec[i]);
-		
-		// waiting thread
-		pthread_mutex_lock(&thread_mutex);
-		if (--thread_endcount)
-			pthread_cond_wait(&thread_cond, &thread_mutex);
-		else {
-			pthread_cond_signal(&simu_cond);
-			pthread_cond_wait(&thread_cond, &thread_mutex);
-		}
-		pthread_mutex_unlock(&thread_mutex);
 	}
 	
 	return (void *)NULL; // dummy
@@ -198,7 +191,7 @@ int SimuInit() {
 	simu_sentlist = (char *)malloc(BASICMEM);
 	simu_needmake = true;
 	
-	thread_endcount = 0;
+	thread_endcount = 1;
 	thread_number = 0;
 	
 	thread_init();
@@ -230,6 +223,11 @@ int SimuReSize(NODEID nodeid) {
 	return 0;
 }
 
+static void simu_signal(void) {
+	pthread_mutex_lock(&simu_mutex);
+	pthread_cond_signal(&simu_cond);
+}
+
 int Simulate(void) {
 	NODEID i, j;
 	
@@ -237,28 +235,19 @@ int Simulate(void) {
 	pthread_mutex_lock(&simu_mutex);
 	simu_needmake = true;
 	thread_endcount = thread_number;
+
 	pthread_cond_broadcast(&thread_cond);
 	pthread_cond_wait(&simu_cond, &simu_mutex);
 	pthread_mutex_unlock(&simu_mutex);
 	
-	if (thread_endcount == 0) {
-		pthread_cond_broadcast(&thread_cond);
-	}
-	else
-		return -1;
-	
 	for (i = j = 0; i < NodeGetNumber(); i++) {
-		simu_nextexec[j++] = (simu_sentlist[i]) ? NodeGetPtr(i) : NULL;
-		simu_sentlist[i] = false;
+		if (simu_sentlist[i]) {
+			simu_sentlist[i] = false;
+			simu_nextexec[j++] = NodeGetPtr(i);
+		}
 	}
 	simu_nextemax = j;
 	simu_needmake = false;
-	
-	pthread_mutex_lock(&simu_mutex);
-	thread_endcount = thread_number;
-	pthread_cond_broadcast(&thread_cond);
-	pthread_cond_wait(&simu_cond, &simu_mutex);
-	pthread_mutex_unlock(&simu_mutex);
 	
 	return 0;
 }

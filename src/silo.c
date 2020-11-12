@@ -96,7 +96,6 @@ int main(int argc, char ** argv) {
 	ed = clock();
 	printf("Time : %.3f\n", (float)(ed - st)/CLOCKS_PER_SEC);
     fflush(stdout);
-	sleep(10);
 	if (status < 0) {
         printf("Simulation error : thread is Not Response error\n");
         fflush(stdout);
