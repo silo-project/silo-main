@@ -24,7 +24,7 @@ struct thread_arg_t {
 	3 : pushexec
 	*/
 };
-
+int debug;
 static int         thread_number;
 static pthread_t * thread_id;
 static pthread_attr_t  thread_attr;
@@ -32,23 +32,20 @@ static pthread_cond_t  thread_cond;
 static pthread_mutex_t thread_mtx_dummy;
 static pthread_mutex_t thread_mutex;
 static struct thread_arg_t * thread_argptr;
-static int thread_endcount;
+static volatile int thread_endcount;
 
 static NODE ** simu_nextexec;
 static NODEID  simu_nextemax;
 static char *  simu_sentlist;
-static volatile int     simu_endcount;
 
 static pthread_cond_t  simu_cond;
 static pthread_mutex_t simu_mutex;
-static long long simu_maxspeed; // max simulation rate per second
 static bool simu_needmake; // if true, must do makelist
 static volatile bool simu_status;
 
 static int    thread_init(void);
-static void   thread_sync(void);
-static void   thread_wait(void);
 static void * thread_main(void *);
+static void * thread_timer(void *);
 
 
 
@@ -81,6 +78,8 @@ int thread_set(int n) {
 		}
 		thread_argptr = p;
 		thread_id     = q;
+		if (thread_endcount)
+			thread_endcount = n - thread_endcount;
 		for (i = thread_number, status = 0; i < n; i++) {
 			thread_argptr[i].workid = i;
 			status += ( pthread_create(&thread_id[i], &thread_attr, thread_main, (void*)&thread_argptr[i]) ) ? 1 : 0;
@@ -113,46 +112,49 @@ int thread_set(int n) {
 }
 int thread_get() { return thread_number; }
 
-// don't change
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-noreturn"
-
 pthread_t thread_debug_id;
 
 static void * thread_debug(void * p) {
 	while (true) {
 		sleep(5);
-		printf("simu_status : %d\n", simu_status);
 		printf("thread_endcount : %d\n", thread_endcount);
 	}
 }
 
+// don't change
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
+
 static void * thread_main(void * p) {
-	long long response;
-	
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	NODEID i, j, k;
+	NODEID i, j;
 	struct thread_arg_t * arg = (struct thread_arg_t *)p;
 	
+//	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	
 	while (true) {
-		thread_wait();
-		thread_endcount = 0;
+		// waiting thread
+		pthread_mutex_lock(&thread_mutex);
+		if (--thread_endcount)
+			pthread_cond_wait(&thread_cond, &thread_mutex);
+		else {
+			pthread_cond_signal(&simu_cond);
+			pthread_cond_wait(&thread_cond, &thread_mutex);
+		}
+		pthread_mutex_unlock(&thread_mutex);
+		
         // next exec
 		for (i = arg->workid; i < simu_nextemax; i += thread_number)
 			simu_nextexec[i]->function(simu_nextexec[i]);
 		
-		thread_sync();
-		thread_endcount = 0;
-		
-		// make exec
-		for (i = j = arg->workid; i < NodeGetLastID(); i += thread_number, j += thread_number) {
-			if (simu_sentlist[i]) {
-				simu_sentlist[i] = false;
-				simu_nextexec[j] = NodeGetPtr(i);
-			}
-			else
-				simu_nextexec[j] = NULL;
+		// waiting thread
+		pthread_mutex_lock(&thread_mutex);
+		if (--thread_endcount)
+			pthread_cond_wait(&thread_cond, &thread_mutex);
+		else {
+			pthread_cond_signal(&simu_cond);
+			pthread_cond_wait(&thread_cond, &thread_mutex);
 		}
+		pthread_mutex_unlock(&thread_mutex);
 	}
 	
 	return (void *)NULL; // dummy
@@ -161,22 +163,6 @@ static void * thread_main(void * p) {
 // don't change
 #pragma clang diagnostic pop
 
-static void thread_sync() {
-	pthread_mutex_lock(&thread_mutex);
-	if (++thread_endcount == thread_number)
-		pthread_cond_broadcast(&thread_cond);
-	else
-		pthread_cond_wait(&thread_cond, &thread_mutex);
-	pthread_mutex_unlock(&thread_mutex);
-}
-static void thread_wait() {
-	pthread_mutex_lock(&thread_mutex);
-	if (++thread_endcount == thread_number)
-		pthread_cond_signal(&simu_cond);
-	else
-		pthread_cond_wait(&thread_cond, &thread_mutex);
-	pthread_mutex_unlock(&thread_mutex);
-}
 
 
 void SendSignal(SENDFORM d, SIGNAL s) {
@@ -210,7 +196,6 @@ int SimuInit() {
 	simu_nextexec = (NODE**)malloc(BASICMEM);
 	simu_nextemax = 0;
 	simu_sentlist = (char *)malloc(BASICMEM);
-	simu_maxspeed = DEFT_NSEC / DEFT_SIM_SPEED;
 	simu_needmake = true;
 	
 	thread_endcount = 0;
@@ -248,23 +233,33 @@ int SimuReSize(NODEID nodeid) {
 int Simulate(void) {
 	NODEID i, j;
 	
+	// pipeline
+	pthread_mutex_lock(&simu_mutex);
 	simu_needmake = true;
-	
+	thread_endcount = thread_number;
 	pthread_cond_broadcast(&thread_cond);
 	pthread_cond_wait(&simu_cond, &simu_mutex);
+	pthread_mutex_unlock(&simu_mutex);
 	
-	
-	for (i = j = 0; i < NodeGetNumber();) {
-		while (simu_nextexec[i++] != NULL && i < NodeGetLastID())
-			;
-		j = i;
-		while (simu_nextexec[j++] == NULL && j < NodeGetLastID())
-			;
-		simu_nextexec[i] = simu_nextexec[j];
-		simu_nextexec[j] = NULL;
+	if (thread_endcount == 0) {
+		pthread_cond_broadcast(&thread_cond);
 	}
+	else
+		return -1;
 	
+	for (i = j = 0; i < NodeGetNumber(); i++) {
+		simu_nextexec[j++] = (simu_sentlist[i]) ? NodeGetPtr(i) : NULL;
+		simu_sentlist[i] = false;
+	}
+	simu_nextemax = j;
 	simu_needmake = false;
+	
+	pthread_mutex_lock(&simu_mutex);
+	thread_endcount = thread_number;
+	pthread_cond_broadcast(&thread_cond);
+	pthread_cond_wait(&simu_cond, &simu_mutex);
+	pthread_mutex_unlock(&simu_mutex);
+	
 	return 0;
 }
 

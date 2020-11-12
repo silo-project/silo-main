@@ -84,6 +84,7 @@ int main(int argc, char ** argv) {
 		if (status = Simulate()) {
 			break;
 		}
+//		printf("tick end\n");
 		if (i / 1000 && (i % 1000 == 0)) {
             printf("Thousand End : %d\n", ((int) i) / 1000);
             fflush(stdout);
@@ -95,7 +96,7 @@ int main(int argc, char ** argv) {
 	ed = clock();
 	printf("Time : %.3f\n", (float)(ed - st)/CLOCKS_PER_SEC);
     fflush(stdout);
-	
+	sleep(10);
 	if (status < 0) {
         printf("Simulation error : thread is Not Response error\n");
         fflush(stdout);
