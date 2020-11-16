@@ -23,7 +23,9 @@ struct thread_arg_t {
 	2 : makeexec
 	3 : pushexec
 	*/
+	NODEID cntmax;
 };
+
 static int         thread_number;
 static pthread_t * thread_id;
 static pthread_attr_t  thread_attr;
@@ -47,7 +49,7 @@ static volatile bool simu_status;
 static int    thread_init(void);
 static void * thread_main(void *);
 static void * thread_timer(void *);
-static void   simu_signal(void);
+static void   thread_ended(void);
 
 
 
@@ -82,6 +84,7 @@ int thread_set(int n) {
 		thread_id     = q;
 		for (i = thread_number, status = 0; i < n; i++) {
 			thread_argptr[i].workid = i;
+			thread_endcount = 1;
 			status += ( pthread_create(&thread_id[i], &thread_attr, thread_main, (void*)&thread_argptr[i]) ) ? 1 : 0;
 			printf("thread created, workid : %d\n", thread_argptr[i].workid);
             fflush(stdout);
@@ -122,6 +125,11 @@ static void * thread_debug(void * p) {
 	}
 }
 
+static void simu_signal(void) {
+	pthread_mutex_lock(&simu_mutex);
+	pthread_cond_signal(&simu_cond);
+}
+
 // don't change
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
@@ -134,7 +142,6 @@ static void * thread_main(void * p) {
 //	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	
 	while (true) {
-		// waiting thread
 		pthread_mutex_lock(&thread_mutex);
 		if (--thread_endcount)
 			pthread_cond_wait(&thread_cond, &thread_mutex);
@@ -159,11 +166,13 @@ static void * thread_main(void * p) {
 
 
 void SendSignal(SENDFORM d, SIGNAL s) {
-	d.node->input[d.portid] = s;
+	printf("debug 1\n");
+	d.node->input[d.port] = s;
+	printf("debug 2\n");
 	simu_sentlist[d.node->nodeid] = true;
 }
 void Transfer(SENDFORM d, SIGNAL s) {
-	d.node->input[d.portid] = s;
+	d.node->input[d.port] = s;
 	simu_sentlist[d.node->nodeid] = true;
 	simu_needmake = true;
 }
@@ -223,15 +232,9 @@ int SimuReSize(NODEID nodeid) {
 	return 0;
 }
 
-static void simu_signal(void) {
-	pthread_mutex_lock(&simu_mutex);
-	pthread_cond_signal(&simu_cond);
-}
-
 int Simulate(void) {
 	NODEID i, j;
 	
-	// pipeline
 	pthread_mutex_lock(&simu_mutex);
 	simu_needmake = true;
 	thread_endcount = thread_number;

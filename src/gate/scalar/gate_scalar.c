@@ -45,9 +45,15 @@ void GateDIV(NODE * node) {
 	SIGNAL a, b, c;
 	a = NodeReadInput(node, 0);
 	b = NodeReadInput(node, 1);
-
-	c.value = a.value / b.value;
-	c.state = -1;
+	
+	if (b.value == 0) { // divide by zero exception
+		c.state = -1;
+		c.value = 0;
+	}
+	else {
+		c.state = -1;
+		c.value = a.value / b.value;
+	}
 
 	SendSignal(node->output[0], c);
 }
@@ -56,8 +62,14 @@ void GateMOD(NODE * node) {
 	a = NodeReadInput(node, 0);
 	b = NodeReadInput(node, 1);
 
-	c.value = a.value % b.value;
-	c.state = -1;
+	if (b.value == 0) { // divide by zero exception
+		c.state = -1;
+		c.value = 0;
+	}
+	else {
+		c.state = -1;
+		c.value = a.value % b.value;
+	}
 
 	SendSignal(node->output[0], c);
 }

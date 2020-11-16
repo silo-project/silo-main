@@ -1,6 +1,3 @@
-#ifndef SILO_RECYCLE_CODE
-#define SILO_RECYCLE_CODE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -102,12 +99,3 @@ void RecyStartgc(NODEID nodeid) {
 	return;
 }
 
-
-
-
-
-
-
-
-
-#endif

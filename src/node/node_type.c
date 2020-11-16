@@ -1,14 +1,10 @@
 /*
 	Name: Node Configuration Module
 	Copyright: SILO
-	Author: rumium
+	Author: see AUTHOR file
 	Date: 09-10-20 16:59 (DD-MM-YY)
 	Description: configure node structures
 */
-
-#ifndef SILO_NODECONF_CODE
-#define SILO_NODECONF_CODE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "../include/define.h"
@@ -16,72 +12,62 @@
 #include "../include/node/node_type.h"
 
 // how much using a memory?
+int NodeUseAttr(NODE * node, DEFT_ADDR size) {
+	void * p;
+	
+	if (node->attribute == NULL)
+		p = malloc(sizeof(DEFT_WORD) * size);
+	else
+		p = realloc(node->attribute, sizeof(DEFT_WORD) * size);
+	
+	if (p == NULL)
+		return -1;
+	else
+		node->attribute = p;
+	return 0;
+}
 int NodeUseStrg(NODE * node, DEFT_ADDR size) {
 	void * p;
 	
 	if (node->storage == NULL)
 		p = malloc(sizeof(VALUE) * size);
 	else
-		p = realloc(node->storage, sizeof(DEFT_WORD) * size);
+		p = realloc(node->storage, sizeof(VALUE) * size);
 	
 	if (p == NULL)
 		return -1;
-	else {
-		node->storage = p;
-		return 0;
-	}
-}
-int NodeUseAttr(NODE * node, DEFT_ADDR size) {
-	void * p;
-	
-	if (node->attribute == NULL)
-		p = malloc(sizeof(VALUE) * size);
 	else
-		p = realloc(node->attribute, sizeof(VALUE) * size);
-	
-	if (p == NULL)
-		return -1;
-	else {
-		node->attribute = p;
-		return 0;
-	}
+		node->storage = p;
+	return 0;
 }
 int NodeUseInpt(NODE * node, DEFT_ADDR size) {
 	void * p;
 	
 	if (node->input == NULL)
-		p = malloc(sizeof(VALUE) * size);
+		p = malloc(sizeof(SIGNAL) * size);
 	else
 		p = realloc(node->input, sizeof(SIGNAL) * size);
 	
 	if (p == NULL)
 		return -1;
-	else {
+	else
 		node->input = p;
-		return 0;
-	}
+	return 0;
 }
 int NodeUseOupt(NODE * node, DEFT_ADDR size) {
 	void * p;
 	
 	if (node->output == NULL)
-		p = malloc(sizeof(VALUE) * size);
+		p = malloc(sizeof(SENDFORM) * size);
 	else
-		p = realloc(node->output, sizeof(VALUE) * size);
+		p = realloc(node->output, sizeof(SENDFORM) * size);
 	
 	if (p == NULL)
 		return -1;
-	else {
+	else
 		node->output = p;
-		return 0;
-	}
+	return 0;
 }
-
-
-
-
-
-
 
 // node configuration
 void NodeSetType(NODE * node, void (*function)(NODE*))         { node->function         = function; }
@@ -90,5 +76,3 @@ void NodeSetAttr(NODE * node, DEFT_WORD attr, DEFT_ADDR index) { node->attribute
 // storage is not able
 void NodeSetOupt(NODE * node, PORTID port, SENDFORM dest) { node->output[port] = dest; }
 
-
-#endif

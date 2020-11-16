@@ -58,18 +58,23 @@ int main(int argc, char ** argv) {
 	
 	clock_t st, ed;
 	
-	s.portid = 0;
 	signal.state = -1;
 	
-	for (i = 0; i < 80; i++) {
+	for (i = 0; i < 100; i++) {
 		p = NodeCreate();
-		NodeSetType(p, GateBuffer);
-		NodeUseInpt(p, 1);
+		NodeSetType(p, GateDIV);
+		NodeUseInpt(p, 2);
 		NodeUseOupt(p, 1);
+		
 		s.node = p;
+		s.port = 0;
 		NodeSetOupt(p, 0, s);
-		signal.value = i;
+		
+		signal.value = i+1;
 		Transfer(s, signal);
+		s.port = 1;
+		Transfer(s, signal);
+		
 		printf("node created : %d\n", (int)i);
         fflush(stdout);
 	}

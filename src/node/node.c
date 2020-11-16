@@ -1,6 +1,9 @@
 #ifndef SILO_NODE_CODE
 #define SILO_NODE_CODE
 
+#include "node_type.c"
+#include "recycle.c"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "../include/define.h"
@@ -16,9 +19,6 @@ static DEFT_ADDR node_number; // valid nodes count
 
 // initialization node management system
 int NodeInit() {
-	if (node_list != NULL)
-		free(node_list);
-	
 	node_size = BASICMEM;
 	node_list = (NODE*)malloc(node_size);
 	node_last = node_number = 0;
@@ -38,6 +38,7 @@ int NodeReSize() {
 	node_size = BASICMEM * n;
 	
 	p = (NODE*)realloc(node_list, node_size);
+	printf("node_size : %d\n", (int)node_size);
 	
 	if (p == NULL)
 		return 1;
@@ -58,11 +59,11 @@ NODE * NodeCreate() {
 			return NULL;
 	}
 	
-	node_list[nodeid].nodeid   = nodeid;
-	node_list[nodeid].storage  = NULL;
-    node_list[nodeid].attribute= NULL;
-    node_list[nodeid].input    = NULL;
-    node_list[nodeid].output   = NULL;
+	node_list[nodeid].nodeid    = nodeid;
+	node_list[nodeid].attribute = NULL;
+	node_list[nodeid].storage   = NULL;
+	node_list[nodeid].input     = NULL;
+	node_list[nodeid].output    = NULL;
 
 
 	return &node_list[nodeid];

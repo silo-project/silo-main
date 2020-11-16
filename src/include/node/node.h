@@ -28,7 +28,7 @@ typedef struct nodestruct {
 
 typedef struct sendformat {
 	NODE * node;
-	PORTID portid;
+	PORTID port;
 } SENDFORM;
 
 
