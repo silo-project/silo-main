@@ -19,8 +19,6 @@
 #include "../include/simulator/simulator_in.h"
 #include "../include/simulator/thread.h"
 
-
-static int         thread_number;
 static pthread_t * thread_id;
 static pthread_attr_t  thread_attr;
 static pthread_cond_t  thread_cond;
@@ -116,10 +114,14 @@ static void * thread_main(void * p) {
 	while (true) {
 		pthread_mutex_lock(&thread_mutex);
 		if (--thread_endcount) {
+			printf("1 ");
 			pthread_cond_wait(&thread_cond, &thread_mutex);
 		}
-		else {
-			simu_signal();
+		else { // if thread_endcount is zero
+			printf("2 ");
+			pthread_mutex_lock(&simu_mutex); // waiting simulate
+			pthread_cond_signal(&simu_cond);
+			
 			pthread_mutex_unlock(&simu_mutex);
 			pthread_cond_wait(&thread_cond, &thread_mutex);
 		}

@@ -20,9 +20,10 @@
 
 #include "simulator_thread.c"
 
-static pthread_cond_t  simu_cond;
 static bool simu_needmake; // if true, must do makelist
 static volatile bool simu_status;
+
+extern volatile int thread_endcount;
 
 void simu_signal(void) {
 	pthread_mutex_lock(&simu_mutex);
@@ -30,7 +31,6 @@ void simu_signal(void) {
 }
 
 void SendSignal(SENDFORM d, SIGNAL s) {
-	printf("input : %X\n", d.node->input[d.port].value);
 	d.node->input[d.port] = s;
 	simu_sentlist[d.node->nodeid] = true;
 }
@@ -39,7 +39,7 @@ void Transfer(SENDFORM d, SIGNAL s) {
 	simu_sentlist[d.node->nodeid] = true;
 	simu_needmake = true;
 }
-static void SimuResetSentlist(void) {
+void SimuResetSentlist(void) {
 	NODEID i;
 	
 	for (i = 0; i < NodeGetLastID(); i++)
@@ -77,6 +77,8 @@ int SimuInit() {
 	
 	printf("thread number : %d\n", thread_number);
     fflush(stdout);
+    
+    printf("debug, thread_endcount pointer : %p\n", &thread_endcount);
 	
 	if (simu_nextexec==NULL || simu_sentlist==NULL)
 		return -1;

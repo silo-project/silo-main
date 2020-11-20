@@ -62,7 +62,7 @@ int main(int argc, char ** argv) {
 	signal.state = -1;
 	signal.value = 0xb7;
 	
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < 80; i++) {
 		p = NodeCreate();
 		NodeSetType(p, GateADD);
 		NodeUseInpt(p, 2);
@@ -76,7 +76,8 @@ int main(int argc, char ** argv) {
 		s.port = 1;
 		Transfer(s, signal);
 		
-		printf("node created : %d\nnodeid ptr : %p\n", (int)p->nodeid, &p->nodeid);
+		printf("node created : %d\n", (int)p->nodeid);
+		printf("nodeid pointer : %p\n", &p->nodeid);
         fflush(stdout);
 	}
 	
