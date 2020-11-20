@@ -7,9 +7,7 @@
 #include "../../include/gate/gate.h"
 #include "../../include/simulator/simulator.h"
 
-inline SIGNAL NodeReadInput(NODE * node, PORTID portid) { return node->input[portid]; }
-
-
+extern SIGNAL NodeReadInput();
 
 void GateADD(NODE * node) {
 	SIGNAL a, b, c;
@@ -18,7 +16,7 @@ void GateADD(NODE * node) {
 
 	c.value = a.value + b.value;
 	c.state = -1;
-
+	
 	SendSignal(node->output[0], c);
 }
 void GateSUB(NODE * node) {

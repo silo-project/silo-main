@@ -8,17 +8,16 @@
 #ifndef SILO_NODECONF_HEAD
 #define SILO_NODECONF_HEAD
 
-#include <stdlib.h>
 #include "../define.h"
 #include "node.h"
 
 // Strg is not Strogg, but storage
 
 // how much using storage?
-int  NodeUseStrg(NODE *, DEFT_ADDR);
-int  NodeUseAttr(NODE *, DEFT_ADDR);
-int  NodeUseInpt(NODE *, DEFT_ADDR);
-int  NodeUseOupt(NODE *, DEFT_ADDR);
+int  NodeUseStrg(NODE *, size_t);
+int  NodeUseAttr(NODE *, size_t);
+int  NodeUseInpt(NODE *, size_t);
+int  NodeUseOupt(NODE *, size_t);
 
 void NodeSetType(NODE * node, void (*fn)(NODE*));
 void NodeSetAttr(NODE * node, DEFT_WORD attr, DEFT_ADDR index);

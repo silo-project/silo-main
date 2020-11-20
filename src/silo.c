@@ -1,8 +1,8 @@
 /*
 	Name: SILO main
 	Copyright: SILO Project
-	Author: rumium
-	Date: 10-10-20 09:09
+	Author: see AUTHOR file
+	Date: 10-10-20 09:09 (DD-MM-YY)
 	Description: SILO main function
 */
 /*
@@ -58,28 +58,28 @@ int main(int argc, char ** argv) {
 	
 	clock_t st, ed;
 	
+
 	signal.state = -1;
+	signal.value = 0xb7;
 	
 	for (i = 0; i < 100; i++) {
 		p = NodeCreate();
-		NodeSetType(p, GateDIV);
+		NodeSetType(p, GateADD);
 		NodeUseInpt(p, 2);
 		NodeUseOupt(p, 1);
 		
 		s.node = p;
 		s.port = 0;
 		NodeSetOupt(p, 0, s);
-		
-		signal.value = i+1;
+
 		Transfer(s, signal);
 		s.port = 1;
 		Transfer(s, signal);
 		
-		printf("node created : %d\n", (int)i);
+		printf("node created : %d\nnodeid ptr : %p\n", (int)p->nodeid, &p->nodeid);
         fflush(stdout);
 	}
 	
-	SimuMakeList();
 	printf("before simulate\n");
     fflush(stdout);
 	

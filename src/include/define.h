@@ -1,7 +1,7 @@
 /*
 	Name: SILO defines
 	Copyright: SILO Project
-	Author: rumium
+	Author: see AUTHOR file
 	Date: 10-10-20 09:14
 	Description: basic SILO defines
 */

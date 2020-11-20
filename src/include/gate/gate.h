@@ -3,10 +3,10 @@
 
 #include "../node/node.h"
 
-SIGNAL NodeReadInput(NODE *, PORTID);
+inline SIGNAL NodeReadInput(NODE * node, PORTID portid) { return node->input[portid]; }
 #define NodeRdIn NodeReadInput
 
-void GateMeetWire(NODE *);
+void MeetWire(NODE *);
 
 void GateADD(NODE *);
 void GateSUB(NODE *);
