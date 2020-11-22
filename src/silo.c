@@ -77,7 +77,6 @@ int main(int argc, char ** argv) {
 		Transfer(s, signal);
 		
 		printf("node created : %d\n", (int)p->nodeid);
-		printf("nodeid pointer : %p\n", &p->nodeid);
         fflush(stdout);
 	}
 	
@@ -91,10 +90,12 @@ int main(int argc, char ** argv) {
 			break;
 		}
 //		printf("tick end\n");
+        /*
 		if (i / 1000 && (i % 1000 == 0)) {
             printf("Thousand End : %d\n", ((int) i) / 1000);
             fflush(stdout);
         }
+        */
 	}
 	printf("Simulate count : %d\n", (int)i);
     fflush(stdout);

@@ -18,6 +18,7 @@ pthread_mutex_t simu_mutex;
 pthread_cond_t  simu_cond;
 
 int thread_number;
+pthread_mutex_t thread_mutex;
 
 void simu_signal(void);
 

@@ -22,7 +22,6 @@
 static pthread_t * thread_id;
 static pthread_attr_t  thread_attr;
 static pthread_cond_t  thread_cond;
-static pthread_mutex_t thread_mutex;
 static struct thread_arg_t * thread_argptr;
 static volatile int thread_endcount;
 
@@ -30,6 +29,8 @@ static int    thread_init(void);
 static void * thread_main(void *);
 static void * thread_timer(void *);
 static void   thread_ended(void);
+
+extern pthread_mutex_t thread_mutex;
 
 static int thread_init() {
 	pthread_attr_init(&thread_attr);
@@ -112,21 +113,17 @@ static void * thread_main(void * p) {
 //	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	
 	while (true) {
-		pthread_mutex_lock(&thread_mutex);
-		if (--thread_endcount) {
-			printf("1 ");
-			pthread_cond_wait(&thread_cond, &thread_mutex);
-		}
-		else { // if thread_endcount is zero
-			printf("2 ");
-			pthread_mutex_lock(&simu_mutex); // waiting simulate
+		pthread_mutex_lock(&thread_mutex); // critical section start
+        
+        if (!--thread_endcount) {
+			pthread_mutex_lock(&simu_mutex);
 			pthread_cond_signal(&simu_cond);
-			
-			pthread_mutex_unlock(&simu_mutex);
-			pthread_cond_wait(&thread_cond, &thread_mutex);
-		}
-		pthread_mutex_unlock(&thread_mutex);
-		
+            pthread_mutex_unlock(&simu_mutex);
+        }
+        
+		pthread_cond_wait(&thread_cond, &thread_mutex);
+		pthread_mutex_unlock(&thread_mutex); // critical section ended
+        
         // next exec
 		for (i = arg->workid; i < simu_nextemax; i += thread_number)
 			simu_nextexec[i]->function(simu_nextexec[i]);

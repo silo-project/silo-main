@@ -50,8 +50,10 @@ static void SimuMakeList() {
 	NODEID i, j;
 	
 	for (i = j = 0; i < NodeGetNumber(); i++) {
-		simu_nextexec[j++] = (simu_sentlist[i]) ? NodeGetPtr(i) : NULL;
-		simu_sentlist[i] = false;
+        if (simu_sentlist[i]) {
+            simu_sentlist[i] = false;
+            simu_nextexec[j++] = NodeGetPtr(i);
+        }
 	}
 	simu_nextemax = j;
 	simu_needmake = false;
@@ -110,10 +112,14 @@ int Simulate(void) {
 		SimuMakeList();
 	
 	pthread_mutex_lock(&simu_mutex);
-	thread_endcount = thread_number;
-
+	
+    thread_endcount = thread_number;
+    
+    pthread_mutex_lock(&thread_mutex);
 	pthread_cond_broadcast(&thread_cond);
-	pthread_cond_wait(&simu_cond, &simu_mutex);
+	pthread_mutex_unlock(&thread_mutex);
+    
+    pthread_cond_wait(&simu_cond, &simu_mutex);
 	pthread_mutex_unlock(&simu_mutex);
 	
 	SimuMakeList();
