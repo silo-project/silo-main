@@ -77,11 +77,6 @@ int SimuInit() {
 	thread_init();
 	thread_set(DEFT_THREAD_NUMBER);
 	
-	printf("thread number : %d\n", thread_number);
-    fflush(stdout);
-    
-    printf("debug, thread_endcount pointer : %p\n", &thread_endcount);
-	
 	if (simu_nextexec==NULL || simu_sentlist==NULL)
 		return -1;
 	else
@@ -97,11 +92,8 @@ int SimuReSize(NODEID nodeid) {
 	q = realloc(simu_sentlist, sizeof(char )*nodeid);
 	
 	if (p == NULL || q == NULL)
-		return -1;
-	
-	simu_nextexec = p;
-	simu_sentlist = q;
-	
+		return 1;
+	simu_nextexec = p, simu_sentlist = q;
 	return 0;
 }
 
@@ -113,13 +105,18 @@ int Simulate(void) {
 	
 	pthread_mutex_lock(&simu_mutex);
 	
+    // set thread_endcount current thread number
     thread_endcount = thread_number;
     
-    pthread_mutex_lock(&thread_mutex);
+    // if the threads are not waiting, a deadlock occurs.
+    // so this function has to wait.
+    pthread_mutex_lock(&thread_mutex); // don't change
 	pthread_cond_broadcast(&thread_cond);
-	pthread_mutex_unlock(&thread_mutex);
+	pthread_mutex_unlock(&thread_mutex); // don't change
     
+    // waiting for threads
     pthread_cond_wait(&simu_cond, &simu_mutex);
+    
 	pthread_mutex_unlock(&simu_mutex);
 	
 	SimuMakeList();

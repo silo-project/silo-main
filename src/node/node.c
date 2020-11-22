@@ -14,8 +14,8 @@
 
 static NODE *    node_list; // array of a node structure
 static NODEID    node_last; // last nodeid
-static DEFT_ADDR node_size; // size of node_list
-static DEFT_ADDR node_number; // valid nodes count
+static size_t node_size; // size of node_list
+static size_t node_number; // valid nodes count
 
 // initialization node management system
 int NodeInit() {
@@ -29,7 +29,7 @@ int NodeInit() {
 		return 0;
 }
 int NodeReSize() {
-	DEFT_ADDR n;
+	size_t n;
 	NODE * p;
 	
 	n =  node_last / (BASICMEM/sizeof(NODE));
@@ -42,10 +42,8 @@ int NodeReSize() {
 	
 	if (p == NULL)
 		return 1;
-	else {
-		node_list = p;
-		return 0;
-	}
+    node_list = p;
+    return 0;
 }
 
 NODE * NodeCreate() {
@@ -60,11 +58,11 @@ NODE * NodeCreate() {
 	}
 	
 	node_list[nodeid].nodeid    = nodeid;
-	node_list[nodeid].attribute = NULL;
-	node_list[nodeid].storage   = NULL;
-	node_list[nodeid].input     = NULL;
-	node_list[nodeid].output    = NULL;
-
+    node_list[nodeid].function  = NULL;
+	node_list[nodeid].attribute = malloc(0);
+	node_list[nodeid].storage   = malloc(0);
+	node_list[nodeid].input     = malloc(0);
+	node_list[nodeid].output    = malloc(0);
 
 	return &node_list[nodeid];
 }

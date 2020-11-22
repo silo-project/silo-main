@@ -13,39 +13,35 @@
 
 // how much using a memory?
 int NodeUseAttr(NODE * node, size_t size) {
-	void * p = (node->attribute == NULL) ? malloc(sizeof(DEFT_WORD) * size) : realloc(node->output, sizeof(DEFT_WORD) * size);
+	void * p = realloc(node->attribute, sizeof(DEFT_WORD) * size);
 	
 	if (p == NULL)
-		return -1;
-	else
-		node->attribute = p;
+		return 1;
+    node->attribute = p;
 	return 0;
 }
 int NodeUseStrg(NODE * node, size_t size) {
-	void * p = (node->storage == NULL) ? malloc(sizeof(VALUE) * size) : realloc(node->output, sizeof(VALUE) * size);
+	void * p = realloc(node->storage, sizeof(VALUE) * size);
 	
 	if (p == NULL)
-		return -1;
-	else
-		node->storage = p;
+		return 1;
+    node->storage = p;
 	return 0;
 }
 int NodeUseInpt(NODE * node, size_t size) {
-	void * p = (node->input == NULL) ? malloc(sizeof(SIGNAL) * size) : realloc(node->output, sizeof(SIGNAL) * size);
+	void * p = realloc(node->input, sizeof(SIGNAL) * size);
 	
 	if (p == NULL)
-		return -1;
-	else
-		node->input = p;
+		return 1;
+    node->input = p;
 	return 0;
 }
 int NodeUseOupt(NODE * node, size_t size) {
-	void * p = (node->output == NULL) ? malloc(sizeof(SENDFORM) * size) : realloc(node->output, sizeof(SENDFORM) * size);
+	void * p = realloc(node->output, sizeof(SENDFORM) * size);
 	
 	if (p == NULL)
-		return -1;
-	else
-		node->output = p;
+		return 1;
+    node->output = p;
 	return 0;
 }
 

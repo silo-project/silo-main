@@ -31,15 +31,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #include "include/gate/gate.h"
 
 int main(int argc, char ** argv) {
-	SimuInit();
-	printf("simulation initialization\n");
-    fflush(stdout);
-	NodeInit();
-	printf("node initialization\n");
-    fflush(stdout);
-	RecyInit();
-	printf("recycle(parts of node) initialization\n");
-    fflush(stdout);
+    int status = 0;
+    
+	status += SimuInit();
+	status += NodeInit();
+	status += RecyInit();
+    if (status)
+        printf("failed to initialization\n");
+    else {
+        printf("simulation initialization\n");
+        fflush(stdout);
+        printf("node initialization\n");
+        fflush(stdout);
+        printf("recycle(parts of node) initialization\n");
+        fflush(stdout);
+    }
 	
 	int thread_num;
 	
@@ -64,6 +70,8 @@ int main(int argc, char ** argv) {
 	
 	for (i = 0; i < 80; i++) {
 		p = NodeCreate();
+        if (p == NULL)
+            return 1;
 		NodeSetType(p, GateADD);
 		NodeUseInpt(p, 2);
 		NodeUseOupt(p, 1);
@@ -90,12 +98,12 @@ int main(int argc, char ** argv) {
 			break;
 		}
 //		printf("tick end\n");
-        /*
+        
 		if (i / 1000 && (i % 1000 == 0)) {
             printf("Thousand End : %d\n", ((int) i) / 1000);
             fflush(stdout);
         }
-        */
+        
 	}
 	printf("Simulate count : %d\n", (int)i);
     fflush(stdout);
