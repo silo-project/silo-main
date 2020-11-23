@@ -47,8 +47,23 @@ int NodeUseOupt(NODE * node, size_t size) {
 
 // node configuration
 void NodeSetType(NODE * node, void (*function)(NODE*))         { node->function         = function; }
-void NodeSetAttr(NODE * node, DEFT_WORD attr, DEFT_ADDR index) { node->attribute[index] = attr; }
-// input is not able
-// storage is not able
+void NodeSetAttr(NODE * node, DEFT_WORD attr, DEFT_ADDR offset) { node->attribute[offset] = attr; }
 void NodeSetOupt(NODE * node, PORTID portid, SENDFORM dest) { node->output[portid] = dest; }
+
+// node configuration array type
+void NodeSetAttrs(NODE * node, DEFT_WORD * attr, DEFT_ADDR maxlen) {
+    DEFT_ADDR i;
+    
+    for (i = 0; i < maxlen; i++)
+        node->attribute[i] = attr[i];
+    return;
+}
+void NodeSetOupts(NODE * node, SENDFORM * target, DEFT_ADDR maxlen) {
+    DEFT_ADDR i;
+    
+    for (i = 0; i < maxlen; i++)
+        node->output[i] = target[i];
+    return;
+}
+
 

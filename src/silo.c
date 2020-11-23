@@ -36,8 +36,10 @@ int main(int argc, char ** argv) {
 	status += SimuInit();
 	status += NodeInit();
 	status += RecyInit();
-    if (status)
+    if (status) {
         printf("failed to initialization\n");
+        return -1;
+    }
     else {
         printf("simulation initialization\n");
         fflush(stdout);
@@ -48,11 +50,16 @@ int main(int argc, char ** argv) {
     }
 	
 	int thread_num;
+    NODEID node_num;
 	
 	printf("Input Thread Number : ");
     fflush(stdout);
 	scanf("%d", &thread_num);
-	
+
+	printf("Input Node Number : ");
+    fflush(stdout);
+	scanf("%lld", &node_num);
+    
 	thread_set(thread_num);
 	
 	NODEID i;
@@ -60,15 +67,13 @@ int main(int argc, char ** argv) {
 	SIGNAL signal;
 	NODE * p;
 	
-	int status = 0;
-	
 	clock_t st, ed;
 	
 
 	signal.state = -1;
 	signal.value = 0xb7;
 	
-	for (i = 0; i < 80; i++) {
+	for (i = 0; i < node_num; i++) {
 		p = NodeCreate();
         if (p == NULL)
             return 1;

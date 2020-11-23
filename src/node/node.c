@@ -14,8 +14,8 @@
 
 static NODE *    node_list; // array of a node structure
 static NODEID    node_last; // last nodeid
-static size_t node_size; // size of node_list
-static size_t node_number; // valid nodes count
+static DEFT_ADDR node_size; // size of node_list
+static NODEID node_number; // valid nodes count
 
 // initialization node management system
 int NodeInit() {
@@ -24,21 +24,21 @@ int NodeInit() {
 	node_last = node_number = 0;
 	
 	if (node_list == NULL)
-		return -1;
-	else
-		return 0;
+		return 1;
+    return 0;
 }
 int NodeReSize() {
 	size_t n;
 	NODE * p;
-	
-	n =  node_last / (BASICMEM/sizeof(NODE));
-	n = (node_last % (BASICMEM/sizeof(NODE))) ? n + 1 : n;
+    
+	n = node_last / (BASICMEM/sizeof(NODE));
+    if (node_last % (BASICMEM/sizeof(NODE)))
+        n++;
 
 	node_size = BASICMEM * n;
 	
-	p = (NODE*)realloc(node_list, node_size);
-	printf("node_size : %d\n", (int)node_size);
+	p = (NODE*)realloc((void*)node_list, node_size);
+	printf("node_size : %lld\n", node_size);
 	
 	if (p == NULL)
 		return 1;
@@ -49,42 +49,41 @@ int NodeReSize() {
 NODE * NodeCreate() {
 	NODEID nodeid;
 	int status;
+    
+    status = 0;
 	
 	if ((nodeid = NodeGetID()) >= node_size/sizeof(NODE)) {
 		status += NodeReSize();
+        printf("status : %d\n", status);
 		status += SimuReSize(nodeid);
-		if (status)
+        printf("status : %d\n", status);
+        printf("resize...\n");
+		if (status) {
+            printf("memory error\n");
 			return NULL;
+        }
 	}
 	
 	node_list[nodeid].nodeid    = nodeid;
     node_list[nodeid].function  = NULL;
+    printf("debug 1\n");
 	node_list[nodeid].attribute = malloc(0);
 	node_list[nodeid].storage   = malloc(0);
 	node_list[nodeid].input     = malloc(0);
 	node_list[nodeid].output    = malloc(0);
+    printf("debug 2\n");
 
 	return &node_list[nodeid];
 }
 void NodeDelete(NODE * node) {
 	NODEID i;
 	
-	node->function = NULL;
+    free(node->attribute);
+    free(node->storage);
+    free(node->input);
+    free(node->output);
 	
-	if (node->attribute == NULL)
-		free(node->attribute);
-	if (node->storage == NULL)
-		free(node->storage);
-	if (node->input == NULL)
-		free(node->input);
-	if (node->output == NULL)
-		free(node->output);
-	
-	if (node->nodeid == node_last) {
-		for (i = node->nodeid; node_list[i].function == NULL;)
-			i--;
-		node_last = i;
-	}
+	node_number--;
 }
 
 // recycle node

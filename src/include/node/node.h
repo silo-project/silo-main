@@ -8,8 +8,6 @@
 #ifndef SILO_NODE_HEAD
 #define SILO_NODE_HEAD
 
-#include <stdbool.h>
-
 #include "../define.h"
 #include "../signal.h"
 

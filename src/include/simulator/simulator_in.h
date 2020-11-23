@@ -11,15 +11,4 @@
 
 #define DEFT_SIM_MAXRES 500 // max response
 
-NODE ** simu_nextexec;
-NODEID  simu_nextemax;
-char *  simu_sentlist;
-pthread_mutex_t simu_mutex;
-pthread_cond_t  simu_cond;
-
-int thread_number;
-pthread_mutex_t thread_mutex;
-
-void simu_signal(void);
-
 #endif

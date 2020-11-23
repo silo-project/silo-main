@@ -1,6 +1,3 @@
-#ifndef SILO_GATE_CODE
-#define SILO_GATE_CODE
-
 #include <stdio.h>
 #include "../include/signal.h"
 #include "../../include/node/node.h"
@@ -132,4 +129,3 @@ void GateROR(NODE * node) {
 void GateBuffer(NODE * node) {
 	SendSignal(node->output[0], node->input[0]);
 }
-#endif
