@@ -7,4 +7,4 @@ add_subdirectory(src)
 
 add_compile_options(-lpthread -g)
 
-target_link_libraries(silo -pthread)
+target_link_libraries(silo pthread)
