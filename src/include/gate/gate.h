@@ -30,5 +30,7 @@ void GateMODS(NODE *);
 void GateMUX(NODE *);
 void GateBuffer(NODE *);
 
+void GateBusyWait(NODE *);
+
 
 #endif

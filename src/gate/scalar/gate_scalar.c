@@ -129,3 +129,10 @@ void GateROR(NODE * node) {
 void GateBuffer(NODE * node) {
 	SendSignal(node->output[0], node->input[0]);
 }
+
+void GateBusyWait(NODE * node) {
+    int i;
+    for (i = 0; i < 1000; i++)
+        ;
+    SendSignal(node->output[0], node->input[0]);
+}

@@ -77,7 +77,7 @@ int main(int argc, char ** argv) {
 		p = NodeCreate();
         if (p == NULL)
             return 1;
-		NodeSetType(p, GateDIV);
+		NodeSetType(p, GateBusyWait);
 		NodeUseInpt(p, 2);
 		NodeUseOupt(p, 1);
 		
