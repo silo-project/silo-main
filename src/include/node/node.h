@@ -41,7 +41,7 @@ typedef struct sendformat {
 int NodeInit();
 int NodeReSizeTable(void);
 
-NODE * NodeCreate();
+NODE * NodeCreate(void);
 void NodeDelete(NODE *);
 
 void NodeRecycle(NODEID);

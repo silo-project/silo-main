@@ -89,7 +89,7 @@ int main(int argc, char ** argv) {
 		s.port = 1;
 		Transfer(s, signal);
 		
-		printf("node created : %d\n", (int)p->nodeid);
+		printf("node created : %lld, pointer : %p\n", p->nodeid, &p->nodeid);
         fflush(stdout);
 	}
 	

@@ -46,7 +46,7 @@ int NodeReSize() {
     return 0;
 }
 
-NODE * NodeCreate() {
+NODE * NodeCreate(void) {
 	NODEID nodeid;
 	int status;
     
@@ -54,10 +54,7 @@ NODE * NodeCreate() {
 	
 	if ((nodeid = NodeGetID()) >= node_size/sizeof(NODE)) {
 		status += NodeReSize();
-        printf("status : %d\n", status);
 		status += SimuReSize(nodeid);
-        printf("status : %d\n", status);
-        printf("resize...\n");
 		if (status) {
             printf("memory error\n");
 			return NULL;
@@ -66,12 +63,10 @@ NODE * NodeCreate() {
 	
 	node_list[nodeid].nodeid    = nodeid;
     node_list[nodeid].function  = NULL;
-    printf("debug 1\n");
 	node_list[nodeid].attribute = malloc(0);
 	node_list[nodeid].storage   = malloc(0);
 	node_list[nodeid].input     = malloc(0);
 	node_list[nodeid].output    = malloc(0);
-    printf("debug 2\n");
 
 	return &node_list[nodeid];
 }
