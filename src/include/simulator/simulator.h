@@ -6,7 +6,7 @@
 
 int SimuInit(void);
 
-int SimuReSize(NODEID);
+int SimuReSize(long long);
 
 int SimuReset(void);
 int Simulate(void);

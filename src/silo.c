@@ -77,7 +77,7 @@ int main(int argc, char ** argv) {
 		p = NodeCreate();
         if (p == NULL)
             return 1;
-		NodeSetType(p, GateADD);
+		NodeSetType(p, GateDIV);
 		NodeUseInpt(p, 2);
 		NodeUseOupt(p, 1);
 		
@@ -92,6 +92,9 @@ int main(int argc, char ** argv) {
 		printf("node created : %lld, pointer : %p\n", p->nodeid, &p->nodeid);
         fflush(stdout);
 	}
+	
+	for (i = 0; i < node_num; i++)
+        printf("node ptr(id : %lld) : %p\n", i, NodeGetPtr(i));
 	
 	printf("before simulate\n");
     fflush(stdout);

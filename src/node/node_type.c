@@ -10,7 +10,6 @@
 #include "../include/define.h"
 #include "../include/node/node.h"
 #include "../include/node/node_type.h"
-
 // how much using a memory?
 int NodeUseAttr(NODE * node, size_t size) {
 	void * p = realloc(node->attribute, sizeof(DEFT_WORD) * size);
@@ -38,7 +37,7 @@ int NodeUseInpt(NODE * node, size_t size) {
 }
 int NodeUseOupt(NODE * node, size_t size) {
 	void * p = realloc(node->output, sizeof(SENDFORM) * size);
-	
+    
 	if (p == NULL)
 		return 1;
     node->output = p;

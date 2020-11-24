@@ -12,32 +12,27 @@
 #include "../include/simulator/simulator.h"
 
 
-static NODE *    node_list; // array of a node structure
-static NODEID    node_last; // last nodeid
+static NODE** node_list; // array of a node structure pointer
+static NODEID node_last; // last nodeid
 static DEFT_ADDR node_size; // size of node_list
 static NODEID node_number; // valid nodes count
 
 // initialization node management system
 int NodeInit() {
 	node_size = BASICMEM;
-	node_list = (NODE*)malloc(node_size);
+	node_list = (NODE**)malloc(node_size);
 	node_last = node_number = 0;
 	
 	if (node_list == NULL)
 		return 1;
     return 0;
 }
-int NodeReSize() {
-	size_t n;
-	NODE * p;
+int NodeReSize(long long size) {
+	NODE ** p;
     
-	n = node_last / (BASICMEM/sizeof(NODE));
-    if (node_last % (BASICMEM/sizeof(NODE)))
-        n++;
-
-	node_size = BASICMEM * n;
-	
-	p = (NODE*)realloc((void*)node_list, node_size);
+    node_size = BASICMEM * size;
+    
+	p = (NODE**)realloc((void*)node_list, node_size);
 	printf("node_size : %lld\n", node_size);
 	
 	if (p == NULL)
@@ -47,38 +42,45 @@ int NodeReSize() {
 }
 
 NODE * NodeCreate(void) {
+    int status = 0;
+    unsigned long long n;
+    NODE * p = (NODE*)malloc(sizeof(NODE));
 	NODEID nodeid;
-	int status;
-    
-    status = 0;
 	
-	if ((nodeid = NodeGetID()) >= node_size/sizeof(NODE)) {
-		status += NodeReSize();
-		status += SimuReSize(nodeid);
-		if (status) {
+	if ((nodeid = NodeGetID()) >= node_size/sizeof(NODE*)) {
+        n = node_last / (BASICMEM/sizeof(NODE*));
+        n = node_last % (BASICMEM/sizeof(NODE*)) ? n+1 : n;
+        
+        node_size = n *= BASICMEM;
+		status += NodeReSize(n);
+		status += SimuReSize(n);
+		if (status || (p == NULL)) {
             printf("memory error\n");
 			return NULL;
         }
 	}
-	
-	node_list[nodeid].nodeid    = nodeid;
-    node_list[nodeid].function  = NULL;
-	node_list[nodeid].attribute = malloc(0);
-	node_list[nodeid].storage   = malloc(0);
-	node_list[nodeid].input     = malloc(0);
-	node_list[nodeid].output    = malloc(0);
-
-	return &node_list[nodeid];
+    
+	p->nodeid    = nodeid;
+    p->function  = NULL;
+	p->attribute = malloc(0);
+	p->storage   = malloc(0);
+	p->input     = malloc(0);
+	p->output    = malloc(0);
+    
+    node_list[nodeid] = p;
+    
+	return p;
 }
 void NodeDelete(NODE * node) {
-	NODEID i;
-	
     free(node->attribute);
     free(node->storage);
     free(node->input);
     free(node->output);
 	
-	node_number--;
+    if ((node_last == node_number) && (node_last > 0))
+        node_last = --node_number;
+	else
+        node_number--;
 }
 
 // recycle node
@@ -100,6 +102,6 @@ NODEID NodeGetID() {
 
 NODEID NodeGetNumber() { return node_number; }
 NODEID NodeGetLastID() { return node_last;   }
-NODE * NodeGetPtr(NODEID nodeid) { return &node_list[nodeid]; }
+inline NODE * NodeGetPtr(NODEID nodeid) { return node_list[nodeid]; }
 
 #endif

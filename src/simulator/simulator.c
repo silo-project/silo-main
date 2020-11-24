@@ -52,14 +52,13 @@ static inline void thread_signal(void);
 
 
 
-void SendSignal(SENDFORM d, SIGNAL s) {
-	d.node->input[d.port] = s;
-    printf("nodeid : %lld\n", d.node->nodeid);
-	simu_sentlist[d.node->nodeid] = true;
+void SendSignal(SENDFORM dest, SIGNAL signal) {
+	dest.node->input[dest.port] = signal;
+    simu_sentlist[dest.node->nodeid] = true;
 }
-void Transfer(SENDFORM d, SIGNAL s) {
-	d.node->input[d.port] = s;
-	simu_sentlist[d.node->nodeid] = true;
+void Transfer(SENDFORM dest, SIGNAL signal) {
+	dest.node->input[dest.port] = signal;
+    simu_sentlist[dest.node->nodeid] = true;
 	simu_needmake = true;
 }
 void SimuResetSentlist(void) {
@@ -107,13 +106,12 @@ int SimuInit() {
 		return 0;
 }
 
-int SimuReSize(NODEID nodeid) {
-	void * p;
-	void * q;
+int SimuReSize(long long size) {
+	void * p, * q;
 	NODEID i;
 	
-	p = realloc(simu_nextexec, sizeof(NODE*)*nodeid);
-	q = realloc(simu_sentlist, sizeof(char )*nodeid);
+	p = realloc(simu_nextexec, BASICMEM/sizeof(NODE*)*size);
+	q = realloc(simu_sentlist, BASICMEM/8*size);
 	
 	if (p == NULL || q == NULL)
 		return 1;
@@ -195,7 +193,7 @@ int thread_get() { return thread_number; }
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 
 static void * thread_main(void * p) {
-	NODEID i, j;
+	register NODEID i, j;
 	int status;
 	struct thread_arg_t * arg = (struct thread_arg_t *)p;
 	
