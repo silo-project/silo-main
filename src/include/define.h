@@ -11,7 +11,7 @@
 #include <stdbool.h>
 
 // default processing size
-#define SILO_WORD int
+#define SILO_WORD long long
 #define SILO_ADDR long long
 
 typedef unsigned SILO_WORD DEFT_WORD;

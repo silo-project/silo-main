@@ -32,7 +32,7 @@ static bool simu_status;
 static pthread_t * thread_id;
 static pthread_attr_t  thread_attr;
 static pthread_cond_t  thread_cond;
-static struct thread_arg_t * thread_argptr;
+static struct thread_argument * thread_argptr;
 static volatile int thread_endcount;
 static int thread_number;
 static pthread_mutex_t thread_mutex;
@@ -94,21 +94,16 @@ int SimuInit() {
 	simu_sentlist = (char *)malloc(BASICMEM);
 	simu_needmake = true;
 	
-	thread_endcount = 1;
-	thread_number = 0;
-	
 	thread_init();
 	thread_set(DEFT_THREAD_NUMBER);
 	
 	if (simu_nextexec==NULL || simu_sentlist==NULL)
-		return -1;
-	else
-		return 0;
+		return 1;
+    return 0;
 }
 
 int SimuReSize(long long size) {
 	void * p, * q;
-	NODEID i;
 	
 	p = realloc(simu_nextexec, BASICMEM/sizeof(NODE*)*size);
 	q = realloc(simu_sentlist, BASICMEM/8*size);
@@ -123,11 +118,36 @@ int Simulate(void) {
 	SimulateTick();
 	return 0;
 }
-static void SimulateTick(void) {
-	if (simu_needmake)
+static inline void SimulateTick(void) {
+	NODEID i, j;
+    
+    if (simu_needmake)
 		SimuMakeList();
 	
-    thread_signal();
+    pthread_mutex_lock(&simu_mutex);
+	
+    // set thread_endcount current thread number
+    thread_endcount = thread_number;
+    
+    // if the threads are not waiting, a deadlock occurs.
+    // so this function has to wait.
+    pthread_mutex_lock(&thread_mutex); // don't change
+	pthread_cond_broadcast(&thread_cond);
+	pthread_mutex_unlock(&thread_mutex); // don't change
+    
+    // waiting for threads
+    pthread_cond_wait(&simu_cond, &simu_mutex);
+    
+	pthread_mutex_unlock(&simu_mutex);
+    
+	for (i = j = 0; i < NodeGetNumber(); i++) {
+        if (simu_sentlist[i]) {
+            simu_sentlist[i] = false;
+            simu_nextexec[j++] = NodeGetPtr(i);
+        }
+	}
+	simu_nextemax = j;
+	simu_needmake = false;
 }
 static void SimulateCycle(void) {
     do {
@@ -143,7 +163,10 @@ static int thread_init() {
 	pthread_mutex_init(&thread_mutex, NULL);
 	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
 	
-	thread_argptr = (struct thread_arg_t*)malloc(0);
+	thread_endcount = 1;
+	thread_number = 0;
+    
+	thread_argptr = (struct thread_argument *)malloc(0);
 	thread_id = (pthread_t*)malloc(0);
 	
 	if (thread_argptr==NULL || thread_id==NULL)
@@ -156,7 +179,7 @@ int thread_set(int n) {
 	void * p, * q;
 	
 	if (n > thread_number) { // create thread
-		p = realloc((void*)thread_argptr, sizeof(struct thread_arg_t) * n);
+		p = realloc((void*)thread_argptr, sizeof(struct thread_argument) * n);
 		q = realloc((void*)thread_id,     sizeof(pthread_t)           * n);
 		if (p==NULL || q==NULL)
 			return -1;
@@ -171,7 +194,7 @@ int thread_set(int n) {
 	else if (n < thread_number) { // delete thread
 		for (i = n; i < thread_number; i++)
 			pthread_cancel(thread_id[i]);
-		p = realloc((void*)thread_argptr, sizeof(struct thread_arg_t) * n);
+		p = realloc((void*)thread_argptr, sizeof(struct thread_argument) * n);
 		q = realloc((void*)thread_id,     sizeof(pthread_t)           * n);
 		if (p==NULL || q==NULL)
 			return -1;
@@ -193,14 +216,22 @@ int thread_get() { return thread_number; }
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 
 static void * thread_main(void * p) {
-	register NODEID i, j;
-	int status;
-	struct thread_arg_t * arg = (struct thread_arg_t *)p;
+	NODEID i;
+	struct thread_argument * arg = (struct thread_argument *)p;
 	
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	
 	while (true) {
-        thread_wait();
+        pthread_mutex_lock(&thread_mutex); // critical section start
+    
+        if (!--thread_endcount) {
+            pthread_mutex_lock(&simu_mutex); // if not waiting, signal is will lost.
+            pthread_cond_signal(&simu_cond);
+            pthread_mutex_unlock(&simu_mutex);
+        }
+        pthread_cond_wait(&thread_cond, &thread_mutex);
+        
+        pthread_mutex_unlock(&thread_mutex); // critical section ended
         
         // next exec
 		for (i = arg->workid; i < simu_nextemax; i += thread_number)

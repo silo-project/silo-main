@@ -51,6 +51,7 @@ int main(int argc, char ** argv) {
 	
 	int thread_num;
     NODEID node_num;
+    NODEID simu_num;
 	
 	printf("Input Thread Number : ");
     fflush(stdout);
@@ -59,6 +60,10 @@ int main(int argc, char ** argv) {
 	printf("Input Node Number : ");
     fflush(stdout);
 	scanf("%lld", &node_num);
+    
+	printf("Input Simulate Number : ");
+    fflush(stdout);
+	scanf("%lld", &simu_num);
     
 	thread_set(thread_num);
 	
@@ -72,6 +77,7 @@ int main(int argc, char ** argv) {
 
 	signal.state = -1;
 	signal.value = 0xb7;
+    s.port = 0;
 	
 	for (i = 0; i < node_num; i++) {
 		p = NodeCreate();
@@ -82,12 +88,11 @@ int main(int argc, char ** argv) {
 		NodeUseOupt(p, 1);
 		
 		s.node = p;
-		s.port = 0;
+        s.port = 0;
 		NodeSetOupt(p, 0, s);
-
-		Transfer(s, signal);
-		s.port = 1;
-		Transfer(s, signal);
+        Transfer(s, signal);
+        s.port = 1;
+        Transfer(s, signal);
 		
 		printf("node created : %lld, pointer : %p\n", p->nodeid, &p->nodeid);
         fflush(stdout);
@@ -101,7 +106,7 @@ int main(int argc, char ** argv) {
 	
 	st = clock();
 	
-	for (i = 0; i < 1000000; i++) {
+	for (i = 0; i < simu_num; i++) {
 		if (status = Simulate()) {
 			break;
 		}
