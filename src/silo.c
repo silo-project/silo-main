@@ -83,7 +83,7 @@ int main(int argc, char ** argv) {
 		p = NodeCreate();
         if (p == NULL)
             return 1;
-		NodeSetType(p, GateADD);
+		NodeSetType(p, GateBusyWait);
 		NodeUseInpt(p, 2);
 		NodeUseOupt(p, 1);
 		
@@ -111,11 +111,12 @@ int main(int argc, char ** argv) {
 			break;
 		}
 //		printf("tick end\n");
-        
+        /*
 		if (i / 1000 && (i % 1000 == 0)) {
             printf("Thousand End : %d\n", ((int) i) / 1000);
             fflush(stdout);
         }
+        */
         
 	}
 	printf("Simulate count : %d\n", (int)i);

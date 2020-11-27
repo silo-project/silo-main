@@ -1,7 +1,7 @@
 add_executable(
 		silo
 		silo.c
-		gate/scalar/gate_scalar.c
+		gate/alu/gate_scalar.c
 		node/node.c
 		simulator/simulator.c
 )
