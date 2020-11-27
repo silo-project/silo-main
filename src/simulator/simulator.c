@@ -21,9 +21,9 @@
 
 
 // declaration
-static NODE ** simu_nextexec;
-static NODEID  simu_nextemax;
-static char *  simu_sentlist;
+static NODE** simu_nextexec;
+static NODEID simu_nextemax;
+static char * simu_sentlist;
 static pthread_mutex_t simu_mutex;
 static pthread_cond_t  simu_cond;
 static bool simu_needmake; // if true, must do makelist
@@ -84,8 +84,6 @@ static inline NODEID SimuMakeList() {
 }
 
 int SimuInit() {
-	DEFT_ADDR i;
-
 	pthread_cond_init(&simu_cond, NULL);
 	pthread_mutex_init(&simu_mutex, NULL);
 	
@@ -163,7 +161,6 @@ static int thread_init() {
 	pthread_mutex_init(&thread_mutex, NULL);
 	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
 	
-	thread_endcount = 1;
 	thread_number = 0;
     
 	thread_argptr = (struct thread_argument *)malloc(0);
