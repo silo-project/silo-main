@@ -3,6 +3,17 @@
 
 #include "../define.h"
 #include "../node/node.h"
+#include "../simulator/thread.h"
+
+struct SimuManage {
+    NODE** nextexec;
+    NODEID nextemax;
+    char * sentlist;
+	bool   needmake;
+    pthread_cond_t cond;
+    pthread_mutex_t mtx;
+    struct ThreadManage thread;
+};
 
 int SimuInit(void);
 

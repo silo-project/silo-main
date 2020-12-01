@@ -1,8 +1,17 @@
 #ifndef SILO_THREAD_HEAD
 #define SILO_THREAD_HEAD
 
-struct thread_argument {
-	int workid;
+struct ThreadArgument {
+	long long workid;
+};
+
+struct ThreadManage {
+    long long   number;
+    pthread_t * tidptr;
+    struct ThreadArgument * argptr;
+    long long endcount;
+    pthread_cond_t cond;
+    pthread_mutex_t mtx;
 };
 
 int thread_set(int);

@@ -88,18 +88,16 @@ int main(int argc, char ** argv) {
 		NodeUseOupt(p, 1);
 		
 		s.node = p;
-        s.port = 0;
+//        s.port = 0;
 		NodeSetOupt(p, 0, s);
-        Transfer(s, signal);
-        s.port = 1;
-        Transfer(s, signal);
+    //    if (rand()%2)
+            Transfer(s, signal);
+//        s.port = 1;
+//        Transfer(s, signal);
 		
 		printf("node created : %lld, pointer : %p\n", p->nodeid, &p->nodeid);
         fflush(stdout);
 	}
-	
-	for (i = 0; i < node_num; i++)
-        printf("node ptr(id : %lld) : %p\n", i, NodeGetPtr(i));
 	
 	printf("before simulate\n");
     fflush(stdout);
@@ -111,13 +109,10 @@ int main(int argc, char ** argv) {
 			break;
 		}
 //		printf("tick end\n");
-        /*
 		if (i / 1000 && (i % 1000 == 0)) {
             printf("Thousand End : %d\n", ((int) i) / 1000);
             fflush(stdout);
         }
-        */
-        
 	}
 	printf("Simulate count : %d\n", (int)i);
     fflush(stdout);

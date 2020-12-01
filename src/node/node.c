@@ -30,7 +30,7 @@ int NodeInit() {
 int NodeReSize(long long size) {
 	NODE ** p;
     
-    node_size = BASICMEM * size;
+    node_size = size;
     
 	p = (NODE**)realloc((void*)node_list, node_size);
 	printf("node_size : %lld\n", node_size);
