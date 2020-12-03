@@ -19,7 +19,7 @@
 #include "../include/simulator/simulator_in.h"
 #include "../include/simulator/thread.h"
 
-
+ 
 // declaration
 static struct SimuManage simu;
 

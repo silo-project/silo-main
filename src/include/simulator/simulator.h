@@ -4,6 +4,7 @@
 #include "../define.h"
 #include "../node/node.h"
 #include "../simulator/thread.h"
+#include <pthread.h>
 
 struct SimuManage {
     NODE** nextexec;

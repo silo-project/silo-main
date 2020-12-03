@@ -90,7 +90,7 @@ int main(int argc, char ** argv) {
 		s.node = p;
 //        s.port = 0;
 		NodeSetOupt(p, 0, s);
-    //    if (rand()%2)
+        if (rand()%2)
             Transfer(s, signal);
 //        s.port = 1;
 //        Transfer(s, signal);

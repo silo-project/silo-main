@@ -1,6 +1,8 @@
 #ifndef SILO_THREAD_HEAD
 #define SILO_THREAD_HEAD
 
+#include <pthread.h>
+
 struct ThreadArgument {
 	long long workid;
 };
