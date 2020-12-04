@@ -25,8 +25,8 @@ static struct SimuManage simu;
 
 int  Simulate(void); // for external
 int  SimuGetState(void);
+static void SimulateStep(void);
 static void SimulateTick(void);
-static void SimulateCycle(void);
 static inline NODEID SimuMakeList();
 
 static int    thread_init(void);
@@ -35,7 +35,12 @@ static void * thread_main(void *);
 static inline void thread_wait(void);
 static inline void thread_signal(void);
 
-
+void SimuListofNextExec(void) {
+    NODEID i;
+    
+    for (i = 0; i < NodeGetLastID(); i++)
+        printf("Node Pointer(%lld) : %p\n", i, simu.nextexec[i]);
+}
 
 void SendSignal(SENDFORM dest, SIGNAL signal) {
 	dest.node->input[dest.port] = signal;
@@ -53,9 +58,9 @@ void SimuResetSentlist(void) {
 }
 
 static inline NODEID SimuMakeList() {
-	NODEID i, j;
+	NODEID i, j, k;
 	
-	for (i = j = 0; i < NodeGetNumber(); i++) {
+	for (i = j = 0, k = NodeGetNumber(); i < k; i++) {
         if (simu.sentlist[i]) {
             simu.sentlist[i] = false;
             simu.nextexec[j++] = NodeGetPtr(i);
@@ -97,22 +102,40 @@ int SimuReSize(long long size) {
 }
 
 int Simulate(void) {
-	SimulateTick();
+	SimulateStep();
 	return 0;
 }
-static inline void SimulateTick(void) {
-	NODEID i, j;
+static inline void SimulateStep(void) {
+	NODEID i;
+    NODEID h, l; // high and low
 	
     if (simu.needmake)
         SimuMakeList();
     
     thread_signal();
+    thread_signal();
     
-    SimuMakeList();
+    for (i = h = 0, l = -1; i < simu.thread.number; i++) {
+        if (simu.thread.argptr[i].makemx > h) // find high
+            h = simu.thread.argptr[i].makemx;
+        if (simu.thread.argptr[i].makemx < l)
+            l = simu.thread.argptr[i].makemx;
+    }
+    
+    while (l < h) {
+        if (simu.nextexec[l] == NULL) {
+            while (simu.nextexec[h] == NULL)
+                h--;
+            simu.nextexec[l] = simu.nextexec[h];
+        }
+        else
+            l++;
+    }
+    simu.nextemax = l;
 }
-static void SimulateCycle(void) {
+static void SimulateTick(void) {
     do {
-        SimulateTick();
+        SimulateStep();
     } while (SimuMakeList());
 }
 
@@ -171,7 +194,7 @@ int thread_get() { return simu.thread.number; }
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 
 static void * thread_main(void * p) {
-	NODEID i;
+	NODEID i, j;
 	struct ThreadArgument * arg = (struct ThreadArgument *)p;
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	
@@ -180,6 +203,17 @@ static void * thread_main(void * p) {
         
         for (i = arg->workid; i < simu.nextemax; i += simu.thread.number)
             simu.nextexec[i]->function(simu.nextexec[i]);
+        
+        thread_wait();
+        
+        for (i = j = arg->workid; i < NodeGetLastID(); i += simu.thread.number) {
+            if (simu.sentlist[i]) {
+                simu.sentlist[i] = 0;
+                simu.nextexec[j] = NodeGetPtr(i);
+                j += simu.thread.number;
+            }
+        }
+        arg->makemx = j;
     }
 	return (void *)NULL; // dummy
 }

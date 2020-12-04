@@ -5,6 +5,7 @@
 
 struct ThreadArgument {
 	long long workid;
+    long long makemx;
 };
 
 struct ThreadManage {

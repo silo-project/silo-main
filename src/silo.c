@@ -108,7 +108,8 @@ int main(int argc, char ** argv) {
 		if (status = Simulate()) {
 			break;
 		}
-//		printf("tick end\n");
+//		printf("step end\n");
+//        SimuListofNextExec();
 		if (i / 1000 && (i % 1000 == 0)) {
             printf("Thousand End : %d\n", ((int) i) / 1000);
             fflush(stdout);

@@ -27,6 +27,7 @@ void SendSignal (SENDFORM, SIGNAL);
 void Transfer(SENDFORM, SIGNAL);
 void SendInteger(SENDFORM, DEFT_WORD);
 void SimuResetSentlist(void);
+void SimuListofNextExec(void);
 
 int thread_set(int);
 
