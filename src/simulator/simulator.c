@@ -73,8 +73,9 @@ static inline NODEID SimuMakeList() {
 }
 
 int SimuInit() {
-	pthread_cond_init(&simu.cond, NULL);
-	pthread_mutex_init(&simu.mtx, NULL);
+    int init_cnd, init_mtx;
+	init_cnd = pthread_cond_init(&simu.cond, NULL);
+	init_mtx = pthread_mutex_init(&simu.mtx, NULL);
 	
 	simu.nextexec = (NODE**)malloc(BASICMEM);
 	simu.nextemax = 0;
@@ -84,7 +85,7 @@ int SimuInit() {
 	thread_init();
 	thread_set(DEFT_THREAD_NUMBER);
 	
-	if (simu.nextexec==NULL || simu.sentlist==NULL)
+	if (simu.nextexec==NULL || simu.sentlist==NULL || init_cnd || init_mtx)
 		return 1;
     return 0;
 }
@@ -136,7 +137,7 @@ static inline void SimulateStep(void) {
 static void SimulateTick(void) {
     do {
         SimulateStep();
-    } while (SimuMakeList());
+    } while (simu.nextemax);
 }
 
 static int thread_init() {

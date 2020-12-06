@@ -88,12 +88,12 @@ int main(int argc, char ** argv) {
 		NodeUseOupt(p, 1);
 		
 		s.node = p;
-//        s.port = 0;
+        s.port = 0;
 		NodeSetOupt(p, 0, s);
         if (rand()%2)
             Transfer(s, signal);
-//        s.port = 1;
-//        Transfer(s, signal);
+        s.port = 1;
+        Transfer(s, signal);
 		
 		printf("node created : %lld, pointer : %p\n", p->nodeid, &p->nodeid);
         fflush(stdout);
@@ -105,9 +105,7 @@ int main(int argc, char ** argv) {
 	st = clock();
 	
 	for (i = 0; i < simu_num; i++) {
-		if (status = Simulate()) {
-			break;
-		}
+        Simulate();
 //		printf("step end\n");
 //        SimuListofNextExec();
 		if (i / 1000 && (i % 1000 == 0)) {
@@ -121,10 +119,6 @@ int main(int argc, char ** argv) {
 	ed = clock();
 	printf("Time : %.3f\n", (float)(ed - st)/CLOCKS_PER_SEC);
     fflush(stdout);
-	if (status < 0) {
-        printf("Simulation error : thread is Not Response error\n");
-        fflush(stdout);
-    }
 	
 	return 0;
 }

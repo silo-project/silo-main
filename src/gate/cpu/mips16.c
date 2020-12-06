@@ -33,8 +33,8 @@ enum STRG_OFFSET {
 	SP,
 	IC,
 	IR,
-	PV_CLK,
-	PV_RST,
+	PREV_CLK,
+	PREV_RST,
 };
 
 enum INPT_OFFSET {
@@ -44,26 +44,12 @@ enum INPT_OFFSET {
 }
 
 void CPU_MIPS16(NODE * node) {
-	if (!(!node->storage[PV_CLK] && node->input[CLK].)) // rising edge check
+	if (!SigChkRiseEdge(&node->storage[PREV_CLK], SigGetLogic(node->input[CLK]))) // rising edge check
 		return;
-	else
-		node->storage[PV_CLK] = 1;
-	
-	switch (node->storage[IC]) {
-	case 0:
-		node->storage[IR] = NodeRdIn(node, DI);
-		node->storage[IC]++;
-		break;
-	case 1:
-		break;
-	case 2:
-		break;
-	case 3:
-		
-		node->storage[IC] = 0;
-		break;
-	default:
-		printf("error : CPU_MIPS16\n");
+    
+    node->storage[IR] = NodeRdIn(node, DI);
+    node->storage[IC]++;
+
 }
 
 void CPU_MIPS16_DECODER(void) {
