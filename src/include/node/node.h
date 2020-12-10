@@ -11,10 +11,6 @@
 #include "../define.h"
 #include "../signal.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct nodestruct NODE;
 typedef struct sendformat SENDFORM;
 
@@ -62,8 +58,6 @@ NODE * NodeGetPtr(NODEID nodeid);
 
 
 
-#ifdef __cplusplus
-};
-#endif
+
 
 #endif
