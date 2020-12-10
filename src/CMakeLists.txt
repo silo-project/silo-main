@@ -6,5 +6,5 @@ add_executable(
 		gate/Memory.c
 		node/node.c
 		simulator/simulator.c
-		signal/signal.c
+		gate/signal.c
 )
