@@ -1,11 +1,9 @@
 #include "node_type.c"
-#include "recycle.c"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include "../include/define.h"
 #include "../include/node/node.h"
-#include "../include/node/recycle.h"
 #include "../include/simulator/simulator.h"
 
 
