@@ -1,4 +1,4 @@
-add_executable(
+add_library(
 		silo-main
 		gate/alu/gate_scalar.c
 		gate/Gates.c
