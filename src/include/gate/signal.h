@@ -1,7 +1,7 @@
 #ifndef SILO_SIGNAL_HEAD
 #define SILO_SIGNAL_HEAD
 
-#include "define.h"
+#include "../define.h"
 
 
 // define of signal
