@@ -1,5 +1,5 @@
 add_executable(
-		silo
+		silo-main
 		silo.c
 		gate/cpu/mips16.c
 		gate/Gates.c
