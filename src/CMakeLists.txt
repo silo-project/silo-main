@@ -1,7 +1,7 @@
 add_executable(
 		silo
 		silo.c
-		gate/cpu/mips16.c
+		gate/alu/gate_scalar.c
 		gate/Gates.c
 		gate/Memory.c
 		node/node.c
