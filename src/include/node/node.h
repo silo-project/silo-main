@@ -11,10 +11,6 @@
 #include "../define.h"
 #include "../signal.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct nodestruct NODE;
 typedef struct sendformat SENDFORM;
 
@@ -55,15 +51,14 @@ NODEID NodeGetNumber(); // get the current valid node count
 NODEID NodeGetLastID();
 NODE * NodeGetPtr(NODEID nodeid);
 
+int RecyInit();
+int RecyReSizeStack();
+int RecyStatus(void);
 
+void   RecyPush(NODEID);
+NODEID RecyPull(void);
 
-
-
-
-
-
-#ifdef __cplusplus
-};
-#endif
+void RecySetgcOfs(NODEID nodeid);
+void RecyStartgc(NODEID nodeid);
 
 #endif
