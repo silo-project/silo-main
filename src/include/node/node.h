@@ -51,13 +51,14 @@ NODEID NodeGetNumber(); // get the current valid node count
 NODEID NodeGetLastID();
 NODE * NodeGetPtr(NODEID nodeid);
 
+int RecyInit();
+int RecyReSizeStack();
+int RecyStatus(void);
 
+void   RecyPush(NODEID);
+NODEID RecyPull(void);
 
-
-
-
-
-
-
+void RecySetgcOfs(NODEID nodeid);
+void RecyStartgc(NODEID nodeid);
 
 #endif
