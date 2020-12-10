@@ -10,6 +10,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // default processing size
 #define SILO_WORD long long
 #define SILO_ADDR long long
@@ -25,8 +29,12 @@ typedef DEFT_ADDR SIMUID;
 #define BASICMEM 4096 // 4KiB = 1Page
 
 typedef union unisign {
-	unsigned SILO_WORD uint;
-	SILO_WORD sint;
+    unsigned SILO_WORD uint;
+    SILO_WORD sint;
 } UNISIGN;
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

@@ -6,11 +6,15 @@
 #include "../simulator/thread.h"
 #include <pthread.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct SimuManage {
-    NODE** nextexec;
+    NODE **nextexec;
     NODEID nextemax;
-    char * sentlist;
-	bool   needmake;
+    char *sentlist;
+    bool needmake;
     pthread_cond_t cond;
     pthread_mutex_t mtx;
     struct ThreadManage thread;
@@ -21,14 +25,23 @@ int SimuInit(void);
 int SimuReSize(long long);
 
 int SimuReset(void);
+
 int Simulate(void);
 
-void SendSignal (SENDFORM, SIGNAL);
+void SendSignal(SENDFORM, SIGNAL);
+
 void Transfer(SENDFORM, SIGNAL);
+
 void SendInteger(SENDFORM, DEFT_WORD);
+
 void SimuResetSentlist(void);
+
 void SimuListofNextExec(void);
 
 int thread_set(int);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

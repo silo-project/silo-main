@@ -11,6 +11,10 @@
 #include "../define.h"
 #include "node.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Strg is not Strogg, but storage
 
 // how much using storage?
@@ -27,7 +31,9 @@ void NodeSetOupt(NODE * node, PORTID port, SENDFORM dest);
 
 
 
-
+#ifdef __cplusplus
+};
+#endif
 
 
 
