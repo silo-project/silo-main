@@ -5,8 +5,7 @@
 
 #include "../include/signal.h"
 #include "../include/node/node.h"
-#include "../include/gate/gate.h"
-#include "../include/gate/Memory.h"
+#include "../include/lib/Memory.h"
 #include "../include/simulator/simulator.h"
 
 void Memory_Register(NODE * node) {

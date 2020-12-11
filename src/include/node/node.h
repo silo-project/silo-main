@@ -9,7 +9,7 @@
 #define SILO_NODE_HEAD
 
 #include "../define.h"
-#include "../gate/signal.h"
+#include "../signal.h"
 
 typedef struct nodestruct NODE;
 typedef struct sendformat SENDFORM;

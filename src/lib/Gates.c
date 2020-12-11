@@ -5,8 +5,7 @@
 
 #include "../include/signal.h"
 #include "../include/node/node.h"
-#include "../include/gate/gate.h"
-#include "../include/gate/Gates.h"
+#include "../include/lib/Gates.h"
 #include "../include/simulator/simulator.h"
 
 

@@ -3,5 +3,5 @@ add_executable(
 		silo.c
 		node/node.c
 		simulator/simulator.c
-		gate/signal.c
+		include/signal.c
 )

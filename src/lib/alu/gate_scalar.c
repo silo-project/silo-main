@@ -1,6 +1,6 @@
-#include "../include/signal.h"
+#include "../../include/signal.h"
 #include "../../include/node/node.h"
-#include "../../include/gate/gate.h"
+#include "../../include/lib/alu/gate_scalar.h"
 #include "../../include/simulator/simulator.h"
 
 
