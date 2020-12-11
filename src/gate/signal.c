@@ -1,5 +1,5 @@
 #include "../include/define.h"
-#include "../include/signal.h"
+#include "../include/gate/signal.h"
 
 VALUE SigGetFloat(SIGNAL signal) { return ~signal.value & ~signal.state; }
 VALUE SigGetError(SIGNAL signal) { return  signal.value & ~signal.state; }
