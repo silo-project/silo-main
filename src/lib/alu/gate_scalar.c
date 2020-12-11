@@ -3,6 +3,8 @@
 #include "../../include/lib/alu/gate_scalar.h"
 #include "../../include/simulator/simulator.h"
 
+#include <stdio.h>
+
 
 void GateADD(NODE * node) {
 	SIGNAL a, b, c;

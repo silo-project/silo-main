@@ -22,6 +22,7 @@ typedef struct nodestruct {
 	VALUE     * storage;
 	SIGNAL    * input;
 	SENDFORM  * output;
+    struct SimuManage * simu;
 } NODE;
 
 typedef struct sendformat {

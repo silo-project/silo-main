@@ -2,16 +2,17 @@
 #define SILO_THREAD_HEAD
 
 #include <pthread.h>
+#include "simulator.h"
 
 struct ThreadArgument {
 	long long workid;
-    long long makemx;
+    struct SimuManage * simu;
 };
 
 struct ThreadManage {
     long long   number;
     pthread_t * tidptr;
-    struct ThreadArgument * argptr;
+    struct ThreadArgument ** argptr;
     long long endcount;
     pthread_cond_t cond;
     pthread_mutex_t mtx;

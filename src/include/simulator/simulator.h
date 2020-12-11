@@ -7,6 +7,7 @@
 #include <pthread.h>
 
 struct SimuManage {
+    SIMUID simu;
     NODE** nextexec;
     NODEID nextemax;
     char * sentlist;
@@ -18,17 +19,20 @@ struct SimuManage {
 
 int SimuInit(void);
 
-int SimuReSize(long long);
+struct SimuManage * SimuCreate(void);
+int  SimuDelete(struct SimuManage * s);
 
-int SimuReset(void);
-int Simulate(void);
+int SimuReSize(struct SimuManage * s);
 
-void SendSignal (SENDFORM, SIGNAL);
+int Simulate(struct SimuManage * s);
+
+void SendSignal(SENDFORM, SIGNAL);
 void Transfer(SENDFORM, SIGNAL);
 void SendInteger(SENDFORM, DEFT_WORD);
-void SimuResetSentlist(void);
-void SimuListofNextExec(void);
+void SimuResetSentlist(struct SimuManage * s);
+void SimuListofNextExec(struct SimuManage * s);
 
-int thread_set(int);
+int  SimuThreadSetNum(struct SimuManage * s, unsigned long long);
+unsigned long long SimuThreadGetNum(struct SimuManage * s);
 
 #endif

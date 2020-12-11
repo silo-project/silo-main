@@ -65,4 +65,7 @@ void NodeSetOupts(NODE * node, SENDFORM * target, DEFT_ADDR maxlen) {
     return;
 }
 
+void NodeSetSim(NODE * node, struct SimuManage * s) { node->simu = s; }
+struct SimuManage * NodeGetSim(NODE * node) { return node->simu; }
+
 

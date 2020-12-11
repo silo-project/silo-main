@@ -48,13 +48,13 @@ int main(int argc, char ** argv) {
         fflush(stdout);
     }
 	
-	int thread_num;
+	NODEID thread_num;
     NODEID node_num;
     NODEID simu_num;
 	
 	printf("Input Thread Number : ");
     fflush(stdout);
-	scanf("%d", &thread_num);
+	scanf("%lld", &thread_num);
 
 	printf("Input Node Number : ");
     fflush(stdout);
@@ -64,7 +64,7 @@ int main(int argc, char ** argv) {
     fflush(stdout);
 	scanf("%lld", &simu_num);
     
-	thread_set(thread_num);
+
 	
 	NODEID i;
 	SENDFORM s;
@@ -78,33 +78,40 @@ int main(int argc, char ** argv) {
 	signal.value = 0xb7;
     s.port = 0;
 	
+    struct SimuManage * simu = SimuCreate();
+	if (SimuThreadSetNum(simu, thread_num))
+        printf("error\n");
+    
 	for (i = 0; i < node_num; i++) {
 		p = NodeCreate();
         if (p == NULL)
             return 1;
 		NodeSetType(p, GateBusyWait);
-		NodeUseInpt(p, 2);
+		NodeUseInpt(p, 1);
 		NodeUseOupt(p, 1);
 		
 		s.node = p;
-        s.port = 0;
 		NodeSetOupt(p, 0, s);
-        if (rand()%2)
-            Transfer(s, signal);
-        s.port = 1;
-        Transfer(s, signal);
-		
+		NodeSetSim(p, simu);
+        
 		printf("node created : %lld, pointer : %p\n", p->nodeid, &p->nodeid);
         fflush(stdout);
 	}
-	
+    
+    SimuReSize(simu);
+    
+    for (i = 0; i < node_num; i++) {
+        p = NodeGetPtr(i);
+        s.node = p;
+        Transfer(s, signal);
+    }
 	printf("before simulate\n");
     fflush(stdout);
 	
 	st = clock();
-	
+    
 	for (i = 0; i < simu_num; i++) {
-        Simulate();
+        Simulate(simu);
 //		printf("step end\n");
 //        SimuListofNextExec();
 		if (i / 1000 && (i % 1000 == 0)) {

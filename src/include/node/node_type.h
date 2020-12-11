@@ -25,6 +25,8 @@ void NodeSetAttr(NODE * node, DEFT_WORD attr, DEFT_ADDR index);
 // storage is not able
 void NodeSetOupt(NODE * node, PORTID port, SENDFORM dest);
 
+void NodeSetSim(NODE *, struct SimuManage *);
+struct SimuManage * NodeGetSim(NODE *);
 
 
 

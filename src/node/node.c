@@ -48,7 +48,6 @@ NODE * NodeCreate(void) {
         
         node_size = n *= BASICMEM;
 		status += NodeReSize(n);
-		status += SimuReSize(n);
 		if (status || (p == NULL)) {
             printf("memory error\n");
 			return NULL;
