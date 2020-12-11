@@ -96,6 +96,12 @@ void SimuListofNextExec(struct SimuManage * s) {
     for (i = 0; i < NodeGetLastID(); i++)
         printf("Node Pointer(%lld) : %p\n", i, s->nextexec[i]);
 }
+void SimuListofSentList(struct SimuManage * s) {
+    NODEID i;
+    
+    for (i = 0; i < NodeGetLastID(); i++)
+        printf("%d ", s->sentlist[i]);
+}
 
 void SendSignal(SENDFORM dest, SIGNAL signal) {
 	dest.node->input[dest.port] = signal;
@@ -146,12 +152,12 @@ int SimuReSize(struct SimuManage * s) {
 	return 0;
 }
 
-int Simulate(struct SimuManage * s) {
+inline int Simulate(struct SimuManage * s) {
 	SimulateStep(s);
 	return 0;
 }
 static inline void SimulateStep(struct SimuManage * s) {
-	NODEID i;
+	register NODEID i, h, l;
     
     if (s->needmake)
         SimuMakeList(s);
@@ -159,17 +165,21 @@ static inline void SimulateStep(struct SimuManage * s) {
     thread_signal(s);
     thread_signal(s);
     
-    for (s->nextemax = NodeGetLastID()-1; s->nextexec[s->nextemax] == NULL; s->nextemax--)
-        ;
+    for (i = h = 0, l = -1; i < s->thread.number; i++) {
+        if (s->thread.argptr[i]->makemx > l)
+            l = s->thread.argptr[i]->makemx;
+        if (s->thread.argptr[i]->makemx < h)
+            h = s->thread.argptr[i]->makemx;
+    }
     
-    for (i = 0; i < s->nextemax; ) {
-        if (s->nextexec[i] == NULL) {
-            while (s->nextexec[s->nextemax] == NULL)
-                s->nextemax--;
-            s->nextexec[i] = s->nextexec[s->nextemax];
+    while (l < h) {
+        if (s->nextexec[l] == NULL) {
+            while (s->nextexec[h] == NULL)
+                h--;
+            s->nextexec[l] = s->nextexec[h];
         }
         else
-            i++;
+            l++;
     }
     s->needmake = false;
 }
@@ -235,7 +245,6 @@ int SimuThreadSetNum(struct SimuManage * s, unsigned long long n) {
 		return 1;
     
 	s->thread.number = n;
-    printf("thread number : %lld\n", s->thread.number = n);
 	return 0;
 }
 unsigned long long SimuThreadGetNum(struct SimuManage * s) { return s->thread.number; }
@@ -245,34 +254,35 @@ unsigned long long SimuThreadGetNum(struct SimuManage * s) { return s->thread.nu
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 
 static void * thread_main(void * p) {
-	NODEID i, j;
-	struct ThreadArgument * arg = (struct ThreadArgument *)p;
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	
+    NODEID i, j;
+    struct ThreadArgument * arg = (struct ThreadArgument *)p;
+    struct SimuManage *    simu = (struct SimuManage *)arg->simu;
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    
     while (true) {
-        thread_wait(arg->simu);
+        thread_wait(simu);
         
-        for (i = arg->workid; i < arg->simu->nextemax; i += arg->simu->thread.number)
-            arg->simu->nextexec[i]->function(arg->simu->nextexec[i]);
+        for (i = arg->workid; i < simu->nextemax; i += simu->thread.number)
+            simu->nextexec[i]->function(simu->nextexec[i]);
         
-        thread_wait(arg->simu);
+        thread_wait(simu);
         
-        for (i = j = arg->workid; i < NodeGetLastID(); i += arg->simu->thread.number) {
-            if (arg->simu->sentlist[i]) {
-                arg->simu->sentlist[i] = 0;
-                arg->simu->nextexec[j] = NodeGetPtr(i);
-                j += arg->simu->thread.number;
+        for (i = j = arg->workid; i < NodeGetLastID(); i += simu->thread.number) {
+            if (simu->sentlist[i]) {
+                simu->sentlist[i] = 0;
+                simu->nextexec[j] = NodeGetPtr(i);
+                j += simu->thread.number;
             }
-            
         }
+        arg->makemx = j;
     }
-	return (void *)NULL; // dummy
+    return (void *)NULL; // dummy
 }
 
 // don't change
 #pragma clang diagnostic pop
 
-static void thread_wait(struct SimuManage * s) {
+static inline void thread_wait(struct SimuManage * s) {
     pthread_mutex_lock(&s->thread.mtx); // critical section start
 
     if (!--s->thread.endcount) {
@@ -284,7 +294,7 @@ static void thread_wait(struct SimuManage * s) {
     
     pthread_mutex_unlock(&s->thread.mtx); // critical section ended
 }
-static void thread_signal(struct SimuManage * s) {
+static inline void thread_signal(struct SimuManage * s) {
 	pthread_mutex_lock(&s->mtx);
 	
     // set thread_endcount current thread number

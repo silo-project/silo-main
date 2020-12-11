@@ -102,9 +102,9 @@ void GateEOR(NODE * node) {
 }
 
 void GateBusyWait(NODE * node) {
-    NODEID i;
-    for (i = 0; i < 1000; i++)
-        ;
+    NODEID i = 0;
+    while (i < 10)
+        i++;
     SendSignal(node->output[0], node->input[0]);
 }
 

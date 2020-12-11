@@ -5,7 +5,8 @@
 #include "simulator.h"
 
 struct ThreadArgument {
-	long long workid;
+	unsigned long long workid;
+    unsigned long long makemx;
     struct SimuManage * simu;
 };
 

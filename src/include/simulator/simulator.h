@@ -31,6 +31,7 @@ void Transfer(SENDFORM, SIGNAL);
 void SendInteger(SENDFORM, DEFT_WORD);
 void SimuResetSentlist(struct SimuManage * s);
 void SimuListofNextExec(struct SimuManage * s);
+void SimuListofSentList(struct SimuManage * s);
 
 int  SimuThreadSetNum(struct SimuManage * s, unsigned long long);
 unsigned long long SimuThreadGetNum(struct SimuManage * s);

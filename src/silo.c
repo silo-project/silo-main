@@ -105,6 +105,7 @@ int main(int argc, char ** argv) {
         s.node = p;
         Transfer(s, signal);
     }
+    
 	printf("before simulate\n");
     fflush(stdout);
 	
@@ -123,7 +124,7 @@ int main(int argc, char ** argv) {
     fflush(stdout);
 	
 	ed = clock();
-	printf("Time : %.3f\n", (float)(ed - st)/CLOCKS_PER_SEC/(float)thread_num);
+	printf("Time : %.3f\n", (float)(ed - st)/CLOCKS_PER_SEC);
     fflush(stdout);
 	
 	return 0;

@@ -6,7 +6,7 @@ set(PATH_LIB src/lib)
 
 add_subdirectory(src)
 
-add_compile_options(-lpthread -g -O3)
+add_compile_options(-lpthread -g -O0)
 
 add_library(
     base
