@@ -26,7 +26,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #include "include/signal.h"
 #include "include/node/node.h"
 #include "include/node/node_type.h"
-#include "include/node/recycle.h"
 #include "include/simulator/simulator.h"
 #include "include/gate/gate.h"
 
@@ -117,7 +116,7 @@ int main(int argc, char ** argv) {
     fflush(stdout);
 	
 	ed = clock();
-	printf("Time : %.3f\n", (float)(ed - st)/CLOCKS_PER_SEC);
+	printf("Time : %.3f\n", (float)(ed - st)/CLOCKS_PER_SEC/(float)thread_num);
     fflush(stdout);
 	
 	return 0;
