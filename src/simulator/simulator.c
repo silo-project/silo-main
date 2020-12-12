@@ -141,7 +141,7 @@ NODEID SimuMakeList(struct SimuManage * s) {
 	}
 	s->nextemax = j;
 	s->needmake = 0;
-    printf("nextemax 0 : %lld", s->nextemax);
+    printf("nextemax 0 : %lld\n", s->nextemax);
     return j;
 }
 
@@ -254,6 +254,9 @@ static void * thread_main(void * p) {
                 j += s->thread.number;
             }
         }
+        for (i = j; i < NodeGetLastID(); i += s->thread.number) {
+            s->nextexec[i] = NULL;
+        }
         arg->makemx = j;
         printf("j : %lld\n", j);
     }
@@ -276,12 +279,8 @@ static void * thread_controller(void * p) {
         if (s->needmake)
             SimuMakeList(s);
         
-        printf("debug\n");
-        
         thread_signal(s);
         thread_signal(s);
-        
-        SimuListofNextExec(s);
         
         for (i = h = 0, l = -1; i < s->thread.number; i++) {
             if (s->thread.argptr[i]->makemx > h) // find high
@@ -307,7 +306,6 @@ static void * thread_controller(void * p) {
         s->nextemax = l;
         
         printf("nextemax 1 : %lld\n", s->nextemax);
-        SimuListofNextExec(s);
     }
     return (void *)NULL;
 }
