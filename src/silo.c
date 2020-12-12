@@ -32,7 +32,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 int main(int argc, char ** argv) {
     int status = 0;
     
-	status += SimuInit();
 	status += NodeInit();
 	status += RecyInit();
     if (status) {
@@ -40,8 +39,6 @@ int main(int argc, char ** argv) {
         return -1;
     }
     else {
-        printf("simulation initialization\n");
-        fflush(stdout);
         printf("node initialization\n");
         fflush(stdout);
         printf("recycle(parts of node) initialization\n");
@@ -103,16 +100,18 @@ int main(int argc, char ** argv) {
     for (i = 0; i < node_num; i++) {
         p = NodeGetPtr(i);
         s.node = p;
-        Transfer(s, signal);
+        if (rand()%2)
+            Transfer(s, signal);
     }
     
 	printf("before simulate\n");
     fflush(stdout);
-	
+    
 	st = clock();
     
 	for (i = 0; i < simu_num; i++) {
         Simulate(simu);
+        sleep(1);
 //		printf("step end\n");
 //        SimuListofNextExec();
 		if (i / 1000 && (i % 1000 == 0)) {

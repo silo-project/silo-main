@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include "../include/define.h"
 #include "../include/node/node.h"
-#include "../include/simulator/simulator.h"
 
 
 static NODE** node_list; // array of a node structure pointer

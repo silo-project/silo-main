@@ -9,6 +9,7 @@
 #define SILO_NODECONF_HEAD
 
 #include "../define.h"
+#include "../simulator/simulator.h"
 #include "node.h"
 
 // Strg is not Strogg, but storage

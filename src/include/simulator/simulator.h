@@ -20,7 +20,7 @@ struct SimuManage {
 int SimuInit(void);
 
 struct SimuManage * SimuCreate(void);
-int  SimuDelete(struct SimuManage * s);
+int  SimuDelete(struct SimuManage *);
 
 int SimuReSize(struct SimuManage * s);
 
@@ -29,11 +29,17 @@ int Simulate(struct SimuManage * s);
 void SendSignal(SENDFORM, SIGNAL);
 void Transfer(SENDFORM, SIGNAL);
 void SendInteger(SENDFORM, DEFT_WORD);
-void SimuResetSentlist(struct SimuManage * s);
-void SimuListofNextExec(struct SimuManage * s);
-void SimuListofSentList(struct SimuManage * s);
 
-int  SimuThreadSetNum(struct SimuManage * s, unsigned long long);
+void SimuResetNextExec(struct SimuManage *);
+void SimuResetSentList(struct SimuManage *);
+void SimuListofNextExec(struct SimuManage *);
+void SimuListofSentList(struct SimuManage *);
+
+int  SimuThreadSetNum(struct SimuManage *, unsigned long long);
 unsigned long long SimuThreadGetNum(struct SimuManage * s);
+NODEID SimuMakeList(struct SimuManage * s);
+void SimuTickMode(struct SimuManage * s);
+void SimuStepMode(struct SimuManage * s);
+bool SimuGetSimMode(struct SimuManage * s);
 
 #endif
