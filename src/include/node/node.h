@@ -8,12 +8,15 @@
 #ifndef SILO_NODE_HEAD
 #define SILO_NODE_HEAD
 
+#include <sys/types.h>
+
 #include "../define.h"
 #include "../signal.h"
 
+
 typedef struct nodestruct NODE;
 typedef struct sendformat SENDFORM;
-
+struct SystemNode;
 
 typedef struct nodestruct {
 	NODEID      nodeid;
@@ -22,13 +25,28 @@ typedef struct nodestruct {
 	VALUE     * storage;
 	SIGNAL    * input;
 	SENDFORM  * output;
-    struct SimuManage * simu;
+    
+    DEFT_ADDR size_attribute;
+    DEFT_ADDR size_storage;
+    DEFT_ADDR size_input;
+    DEFT_ADDR size_output;
+    
+    struct Simulator * simu;
 } NODE;
 
 typedef struct sendformat {
 	NODE * node;
 	PORTID port;
 } SENDFORM;
+
+struct SystemNode {
+    NODE** list; // array of a node structure pointer
+    DEFT_ADDR size; // size of node_list
+    NODEID last;
+    NODEID number; // valid nodes count
+    NODEID recycle;
+    bool   deleted;
+};
 
 
 
@@ -39,27 +57,18 @@ typedef struct sendformat {
 
 
 // functions
-int NodeInit();
-int NodeReSizeTable(void);
+int NodeInit(struct Simulator *);
 
-NODE * NodeCreate(void);
-void NodeDelete(NODE *);
+NODE * NodeCreate(struct Simulator *);
+void   NodeDelete(NODE *);
+NODE * NodeMakeCopy(NODE *);
 
 void NodeRecycle(NODEID);
 
-NODEID NodeGetID(); // get a usable(creatable) nodeid
-NODEID NodeGetNumber(); // get the current valid node count
-NODEID NodeGetLastID();
-NODE * NodeGetPtr(NODEID nodeid);
+NODEID NodeGetID(struct SystemNode *); // get a usable(creatable) nodeid
+NODEID NodeGetNumber(struct SystemNode *);
+NODEID NodeGetLastID(struct SystemNode *);
+NODE * NodeGetPtr(struct SystemNode *, NODEID);
 
-int RecyInit();
-int RecyReSizeStack();
-int RecyStatus(void);
-
-void   RecyPush(NODEID);
-NODEID RecyPull(void);
-
-void RecySetgcOfs(NODEID nodeid);
-void RecyStartgc(NODEID nodeid);
 
 #endif

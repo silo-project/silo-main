@@ -5,189 +5,131 @@
 #include "../include/define.h"
 #include "../include/node/node.h"
 
-
-static NODE** node_list; // array of a node structure pointer
-static NODEID node_last; // last nodeid
-static DEFT_ADDR node_size; // size of node_list
-static NODEID node_number; // valid nodes count
-
 // initialization node management system
-int NodeInit() {
-	node_size = BASICMEM;
-	node_list = (NODE**)malloc(node_size);
-	node_last = node_number = 0;
+int NodeInit(struct Simulator * s) {
+	s->node.size = BASICMEM;
+	s->node.list = (NODE**)malloc(s->node.size);
+	s->node.last = s->node.number = 0;
 	
-	if (node_list == NULL)
+	if (s->node.list == NULL)
 		return 1;
     return 0;
 }
-int NodeReSize(long long size) {
-	NODE ** p;
-    
-    node_size = size;
-    
-	p = (NODE**)realloc((void*)node_list, node_size);
-	printf("node_size : %lld\n", node_size);
-	
-	if (p == NULL)
-		return 1;
-    node_list = p;
-    return 0;
-}
-
-NODE * NodeCreate(void) {
-    int status = 0;
-    unsigned long long n;
+NODE * NodeCreate(struct Simulator * s) {
     NODE * p = (NODE*)malloc(sizeof(NODE));
 	NODEID nodeid;
 	
-	if ((nodeid = NodeGetID()) >= node_size/sizeof(NODE*)) {
-        n = node_last / (BASICMEM/sizeof(NODE*));
-        n = node_last % (BASICMEM/sizeof(NODE*)) ? n+1 : n;
+	if ((nodeid = NodeGetID(&s->node)) >= s->node.size/sizeof(NODE*)) {
+        NODE ** q;
         
-        node_size = n *= BASICMEM;
-		status += NodeReSize(n);
-		if (status || (p == NULL)) {
-            printf("memory error\n");
-			return NULL;
+        s->node.size = s->node.last / (BASICMEM/sizeof(NODE*));
+        s->node.size = s->node.last % (BASICMEM/sizeof(NODE*)) ? s->node.size+1 : s->node.size;
+        s->node.size *= BASICMEM;
+        
+        q = (NODE**)realloc((void*)s->node.list, s->node.size);
+        
+        if (p == NULL || q == NULL) {
+            printf("p : %p, q : %p\n", p, q);
+            return NULL;
         }
-	}
+        s->node.list = q;
+    }
     
 	p->nodeid    = nodeid;
     p->function  = NULL;
+    p->simu = s;
+    
+    p->size_attribute = 0;
+    p->size_storage   = 0;
+    p->size_input     = 0;
+    p->size_output    = 0;
+    
 	p->attribute = malloc(0);
 	p->storage   = malloc(0);
 	p->input     = malloc(0);
 	p->output    = malloc(0);
     
-    node_list[nodeid] = p;
-    
+    if (p->attribute == NULL || p->storage == NULL || p->input == NULL || p->output == NULL) {
+        if (p->attribute == NULL)
+            free(p->attribute);
+        if (p->storage == NULL)
+            free(p->storage);
+        if (p->input == NULL)
+            free(p->input);
+        if (p->output == NULL)
+            free(p->output);
+        printf("Node Create Error.\n");
+        free(p);
+        if ((s->node.last == s->node.number) && (s->node.last > 0))
+            s->node.last = --s->node.number;
+        else
+            s->node.number--;
+        printf("debug 1\n");
+        return NULL;
+    }
+    s->node.list[nodeid] = p;
 	return p;
 }
 void NodeDelete(NODE * node) {
+    struct SystemNode * n = &node->simu->node;
+    
     free(node->attribute);
     free(node->storage);
     free(node->input);
     free(node->output);
-	
-    if ((node_last == node_number) && (node_last > 0))
-        node_last = --node_number;
-	else
-        node_number--;
+    n->list[node->nodeid] = NULL;
+    
+    if (n->deleted) {
+        if (n->recycle > node->nodeid) {
+            n->recycle = node->nodeid;
+        }
+    }
+    else {
+        n->recycle = node->nodeid;
+        n->deleted = true;
+    }
+    
+    free(node);
+}
+NODE * NodeMakeCopy(NODE * p) { // duplication node
+    DEFT_ADDR i;
+    NODE * q = NodeCreate(p->simu);
+    if (q == NULL)
+        return NULL;
+    
+    NodeSetType(q, p->function);
+    
+    NodeUseStrg(q, p->size_attribute);
+    NodeUseAttr(q, p->size_storage);
+    NodeUseInpt(q, p->size_input);
+    NodeUseOupt(q, p->size_output);
+    
+    for (i = 0; i < p->size_attribute; i++)
+        q->attribute[i] = p->attribute[i];
+    for (i = 0; i < p->size_storage; i++)
+        q->storage[i] = p->storage[i];
+    for (i = 0; i < p->size_input; i++)
+        q->input[i] = p->input[i];
+    for (i = 0; i < p->size_output; i++)
+        q->output[i] = p->output[i];
+    
+    return q;
 }
 
-// recycle node
-void NodeRecycle(NODEID nodeid) {
-	RecyPush(nodeid);
-	node_number--;
+NODEID NodeGetID(struct SystemNode * n) {
+    NODEID i, j;
+    
+    if (n->deleted) {
+        i = n->recycle;
+        for (j = i+1; n->list[j] != NULL; j++)
+            ;
+        n->recycle = j;
+        return i;
+    }
+    else
+        return n->last++;
 }
 
-NODEID NodeGetID() {
-	if (RecyStatus()) {
-		node_number++;
-		return RecyPull();
-	}
-	else {
-		node_number++;
-		return node_last++;
-	}
-}
-
-NODEID NodeGetNumber() { return node_number; }
-NODEID NodeGetLastID() { return node_last;   }
-inline NODE * NodeGetPtr(NODEID nodeid) { return node_list[nodeid]; }
-
-// variables
-
-static NODEID * idStack;
-static NODEID stackSize;
-static NODEID stackPtr;
-
-static bool isStackFull;
-static bool isStackSign;
-
-static NODEID gcOfs;
-
-
-
-// functions
-
-// initialization recycle system
-int RecyInit() {
-	if (idStack != NULL)
-		free(idStack);
-	
-	stackSize = BASICMEM;
-	idStack = malloc(sizeof(NODEID) * stackSize);
-	
-	gcOfs = 20;
-	isStackFull = false;
-	isStackSign = false;
-	
-	if (idStack == NULL)
-		return 1;
-	else
-		return 0;
-}
-int RecyReSizeStack() {
-	int n;
-	NODEID * p;
-	
-	stackSize = stackPtr / (BASICMEM/sizeof(NODEID));
-	if (stackPtr / (BASICMEM/sizeof(NODEID)))
-		stackSize++;
-		
-	p = (NODEID*)realloc(idStack, stackSize);
-	
-	if (p == NULL)
-		return 1;
-	else {
-		idStack = p;
-		return 0;
-	}
-}
-
-
-int RecyStatus(void) {
-	if (stackPtr != 0)
-		return true;
-	else
-		return false;
-}
-
-
-
-// stack control
-void RecyPush(NODEID nodeid) {
-	if (stackPtr < stackSize)
-		idStack[stackPtr++] = nodeid;
-	else
-		printf("\nWarning! : Stack Overflow.\n");
-	
-	if (stackPtr > gcOfs-1 )
-		RecyStartgc(idStack[stackPtr-gcOfs]);
-	
-	return;
-}
-NODEID RecyPull(void) {
-	NODEID nodeid;
-	if (stackPtr >= 0)
-		nodeid = idStack[--stackPtr];
-	else
-		printf("\nWarning! : Stack Underflow.\n");
-	
-	return nodeid;
-}
-
-
-
-// garbage collector
-void RecySetgcOfs(NODEID value) {
-	gcOfs = value;
-	return;
-}
-void RecyStartgc(NODEID nodeid) {
-	NodeDelete(NodeGetPtr(nodeid));
-	return;
-}
-
+NODEID NodeGetNumber(struct SystemNode * n) { return n->number; }
+NODEID NodeGetLastID(struct SystemNode * n) { return n->last;   }
+inline NODE * NodeGetPtr(struct SystemNode * n, NODEID nodeid) { return n->list[nodeid]; }

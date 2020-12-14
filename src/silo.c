@@ -31,18 +31,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 int main(int argc, char ** argv) {
     int status = 0;
+    struct Simulator * simulator = SimuCreate();
+    if (simulator == NULL)
+        return -1;
+	status += NodeInit(simulator);
     
-	status += NodeInit();
-	status += RecyInit();
     if (status) {
         printf("failed to initialization\n");
         return -1;
-    }
-    else {
-        printf("node initialization\n");
-        fflush(stdout);
-        printf("recycle(parts of node) initialization\n");
-        fflush(stdout);
     }
 	
 	NODEID thread_num;
@@ -75,12 +71,12 @@ int main(int argc, char ** argv) {
 	signal.value = 0xb7;
     s.port = 0;
 	
-    struct SimuManage * simu = SimuCreate();
-	if (SimuThreadSetNum(simu, thread_num))
+
+	if (SimuThreadSetNum(&simulator->simu, thread_num))
         printf("error\n");
     
 	for (i = 0; i < node_num; i++) {
-		p = NodeCreate();
+		p = NodeCreate(simulator);
         if (p == NULL)
             return 1;
 		NodeSetType(p, GateBusyWait);
@@ -89,16 +85,16 @@ int main(int argc, char ** argv) {
 		
 		s.node = p;
 		NodeSetOupt(p, 0, s);
-		NodeSetSim(p, simu);
+		NodeSetSim(p, simulator);
         
 		printf("node created : %lld, pointer : %p\n", p->nodeid, &p->nodeid);
         fflush(stdout);
 	}
     
-    SimuReSize(simu);
+    SimuReSize(simulator);
     
     for (i = 0; i < node_num; i++) {
-        p = NodeGetPtr(i);
+        p = NodeGetPtr(&simulator->node, i);
         s.node = p;
         if (rand()%2)
             Transfer(s, signal);
@@ -110,9 +106,9 @@ int main(int argc, char ** argv) {
 	st = clock();
     
 	for (i = 0; i < simu_num; i++) {
-        Simulate(simu);
+        status = Simulate(simulator);
         sleep(1);
-//		printf("step end\n");
+		printf("step end\n");
 //        SimuListofNextExec();
 		if (i / 1000 && (i % 1000 == 0)) {
             printf("Thousand End : %d\n", ((int) i) / 1000);

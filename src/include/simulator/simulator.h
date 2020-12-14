@@ -5,41 +5,51 @@
 #include "../node/node.h"
 #include "../simulator/thread.h"
 #include <pthread.h>
+#include <sys/types.h>
 
-struct SimuManage {
-    SIMUID simu;
+struct Simulator;
+struct SystemSimu;
+
+struct SystemSimu {
     NODE** nextexec;
     NODEID nextemax;
     char * sentlist;
-	bool   needmake;
+    bool   needmake;
     pthread_cond_t cond;
     pthread_mutex_t mtx;
-    struct ThreadManage thread;
+    struct SystemThread thread;
 };
+
+struct Simulator {
+    struct SystemNode node;
+    struct SystemSimu simu;
+};
+
+
 
 int SimuInit(void);
 
-struct SimuManage * SimuCreate(void);
-int  SimuDelete(struct SimuManage *);
+struct Simulator * SimuCreate(void);
+int  SimuDelete(struct Simulator *);
 
-int SimuReSize(struct SimuManage * s);
+int SimuReSize(struct Simulator *);
 
-int Simulate(struct SimuManage * s);
+int Simulate(struct Simulator *);
 
 void SendSignal(SENDFORM, SIGNAL);
 void Transfer(SENDFORM, SIGNAL);
 void SendInteger(SENDFORM, DEFT_WORD);
 
-void SimuResetNextExec(struct SimuManage *);
-void SimuResetSentList(struct SimuManage *);
-void SimuListofNextExec(struct SimuManage *);
-void SimuListofSentList(struct SimuManage *);
+void SimuResetNextExec(struct Simulator *);
+void SimuResetSentList(struct Simulator *);
+void SimuListofNextExec(struct Simulator *);
+void SimuListofSentList(struct Simulator *);
 
-int  SimuThreadSetNum(struct SimuManage *, unsigned long long);
-unsigned long long SimuThreadGetNum(struct SimuManage * s);
-NODEID SimuMakeList(struct SimuManage * s);
-void SimuTickMode(struct SimuManage * s);
-void SimuStepMode(struct SimuManage * s);
-bool SimuGetSimMode(struct SimuManage * s);
+int  SimuThreadSetNum(struct SystemSimu *, unsigned long long);
+unsigned long long SimuThreadGetNum(struct SystemThread *);
+NODEID SimuMakeList(struct Simulator *);
+void SimuTickMode(struct SystemThread *);
+void SimuStepMode(struct SystemThread *);
+bool SimuGetSimMode(struct SystemThread *);
 
 #endif

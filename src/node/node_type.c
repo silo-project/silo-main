@@ -12,36 +12,40 @@
 #include "../include/node/node_type.h"
 
 // how much using a memory?
-int NodeUseAttr(NODE * node, size_t size) {
+int NodeUseAttr(NODE * node, DEFT_ADDR size) {
 	void * p = realloc(node->attribute, sizeof(DEFT_WORD) * size);
 	
 	if (p == NULL)
 		return 1;
     node->attribute = p;
+    node->size_attribute = size;
 	return 0;
 }
-int NodeUseStrg(NODE * node, size_t size) {
+int NodeUseStrg(NODE * node, DEFT_ADDR size) {
 	void * p = realloc(node->storage, sizeof(VALUE) * size);
 	
 	if (p == NULL)
 		return 1;
     node->storage = p;
+    node->size_storage = size;
 	return 0;
 }
-int NodeUseInpt(NODE * node, size_t size) {
+int NodeUseInpt(NODE * node, DEFT_ADDR size) {
 	void * p = realloc(node->input, sizeof(SIGNAL) * size);
 	
 	if (p == NULL)
 		return 1;
     node->input = p;
+    node->size_input = size;
 	return 0;
 }
-int NodeUseOupt(NODE * node, size_t size) {
+int NodeUseOupt(NODE * node, DEFT_ADDR size) {
 	void * p = realloc(node->output, sizeof(SENDFORM) * size);
     
 	if (p == NULL)
 		return 1;
     node->output = p;
+    node->size_output = size;
 	return 0;
 }
 
@@ -66,7 +70,7 @@ void NodeSetOupts(NODE * node, SENDFORM * target, DEFT_ADDR maxlen) {
     return;
 }
 
-void NodeSetSim(NODE * node, struct SimuManage * s) { node->simu = s; }
-struct SimuManage * NodeGetSim(NODE * node) { return node->simu; }
+void NodeSetSim(NODE * node, struct Simulator * s) { node->simu = s; }
+struct Simulator * NodeGetSim(NODE * node) { return node->simu; }
 
 

@@ -15,10 +15,10 @@
 // Strg is not Strogg, but storage
 
 // how much using storage?
-int  NodeUseStrg(NODE *, size_t);
-int  NodeUseAttr(NODE *, size_t);
-int  NodeUseInpt(NODE *, size_t);
-int  NodeUseOupt(NODE *, size_t);
+int  NodeUseStrg(NODE *, DEFT_ADDR);
+int  NodeUseAttr(NODE *, DEFT_ADDR);
+int  NodeUseInpt(NODE *, DEFT_ADDR);
+int  NodeUseOupt(NODE *, DEFT_ADDR);
 
 void NodeSetType(NODE * node, void (*fn)(NODE*));
 void NodeSetAttr(NODE * node, DEFT_WORD attr, DEFT_ADDR index);
@@ -26,8 +26,8 @@ void NodeSetAttr(NODE * node, DEFT_WORD attr, DEFT_ADDR index);
 // storage is not able
 void NodeSetOupt(NODE * node, PORTID port, SENDFORM dest);
 
-void NodeSetSim(NODE *, struct SimuManage *);
-struct SimuManage * NodeGetSim(NODE *);
+void NodeSetSim(NODE *, struct Simulator *);
+struct Simulator * NodeGetSim(NODE *);
 
 
 
