@@ -107,7 +107,7 @@ int main(int argc, char ** argv) {
     
 	for (i = 0; i < simu_num; i++) {
         status = Simulate(simulator);
-        sleep(1);
+        printf("status : %d\n", status);
 		printf("step end\n");
 //        SimuListofNextExec();
 		if (i / 1000 && (i % 1000 == 0)) {
