@@ -72,7 +72,7 @@ int main(int argc, char ** argv) {
     s.port = 0;
 	
 
-	if (SimuThreadSetNum(&simulator->simu, thread_num))
+	if (SimuThreadSetNum(simulator, thread_num))
         printf("error\n");
     
 	for (i = 0; i < node_num; i++) {

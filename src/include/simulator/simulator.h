@@ -1,3 +1,4 @@
+
 #ifndef SILO_SIMULATE_HEAD
 #define SILO_SIMULATE_HEAD
 
@@ -15,8 +16,9 @@ struct SystemSimu {
     NODEID nextemax;
     char * sentlist;
     bool   needmake;
-    pthread_cond_t cond;
-    pthread_mutex_t mtx;
+    pthread_cond_t * cond;
+    pthread_mutex_t * mtx;
+    pthread_attr_t * attr;
     struct SystemThread thread;
 };
 
@@ -45,7 +47,7 @@ void SimuResetSentList(struct Simulator *);
 void SimuListofNextExec(struct Simulator *);
 void SimuListofSentList(struct Simulator *);
 
-int  SimuThreadSetNum(struct SystemSimu *, unsigned long long);
+int  SimuThreadSetNum(struct Simulator *, unsigned long long);
 unsigned long long SimuThreadGetNum(struct SystemThread *);
 NODEID SimuMakeList(struct Simulator *);
 void SimuTickMode(struct SystemThread *);
