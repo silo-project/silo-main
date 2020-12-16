@@ -106,9 +106,11 @@ int main(int argc, char ** argv) {
 	st = clock();
     
 	for (i = 0; i < simu_num; i++) {
+        loop:
         status = Simulate(simulator);
-        printf("status : %d\n", status);
-		printf("step end\n");
+        if (status) {
+            goto loop;
+        }
 //        SimuListofNextExec();
 		if (i / 1000 && (i % 1000 == 0)) {
             printf("Thousand End : %d\n", ((int) i) / 1000);

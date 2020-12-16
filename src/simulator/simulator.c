@@ -60,17 +60,6 @@ struct Simulator * SimuCreate(void) {
     if (SimuThreadInit(&s->simu.thread))
         printf("error\n");
     
-    pthread_mutex_lock(s->simu.thread.tmtx);
-    s->simu.thread.tcontrol = malloc(sizeof(pthread_t));
-    
-    init_tthr = pthread_create(s->simu.thread.tcontrol, s->simu.attr, thread_controller, (void *)s);
-    while (s->simu.thread.status == 0)
-        pthread_cond_wait(s->simu.thread.tcond, s->simu.thread.tmtx);
-    pthread_mutex_unlock(s->simu.thread.tmtx);
-    pthread_mutex_lock(s->simu.thread.tmtx);
-    pthread_cond_signal(s->simu.thread.tcond);
-    pthread_mutex_unlock(s->simu.thread.tmtx);
-    
 	init_thr = SimuThreadSetNum(s, DEFT_THREAD_NUMBER);
 
 	if (s->simu.nextexec==NULL || s->simu.sentlist==NULL || init_cnd || init_mtx || init_thr || init_tthr) {
@@ -293,18 +282,18 @@ static void * thread_main(void * p) {
 }
 static void * thread_controller(void * p) {
     register NODEID i, h, l;
-
+    static unsigned long long count = 0;
+    
     struct Simulator * s = (struct Simulator *)p;
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
     
-    pthread_mutex_lock(s->simu.thread.tmtx);
-    s->simu.thread.status = 0;
-    pthread_cond_signal(s->simu.thread.tcond);
-    pthread_cond_wait(s->simu.thread.tcond, s->simu.thread.tmtx);
-    
-    printf("unlocked\n");
     while (true) {
+        printf("count : %lld\n", count++);
+        
+        s->simu.thread.status = 0;
         pthread_cond_wait(s->simu.thread.tcond, s->simu.thread.tmtx);
+        s->simu.thread.status = 1;
         
         if (s->simu.needmake)
             SimuMakeList(s);
@@ -333,7 +322,6 @@ static void * thread_controller(void * p) {
         }
         s->simu.needmake = false;
         s->simu.nextemax = l;
-        printf("nextemax 1 : %lld", l);
     }
     return (void *)NULL;
 }
