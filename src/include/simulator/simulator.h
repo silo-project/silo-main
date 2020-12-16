@@ -1,15 +1,15 @@
-
-#ifndef SILO_SIMULATE_HEAD
-#define SILO_SIMULATE_HEAD
+#ifndef SILO_SIMULATE_H
+#define SILO_SIMULATE_H
 
 #include "../define.h"
+#include "../signal.h"
 #include "../node/node.h"
-#include "../simulator/thread.h"
-#include <pthread.h>
-#include <sys/types.h>
+#include "thread.h"
 
-struct Simulator;
-struct SystemSimu;
+typedef struct nodestruct NODE;
+typedef struct signalstruct SIGNAL;
+
+typedef struct Simulator SIMU;
 
 struct SystemSimu {
     NODE** nextexec;
@@ -22,34 +22,34 @@ struct SystemSimu {
     struct SystemThread thread;
 };
 
-struct Simulator {
+typedef struct Simulator {
     struct SystemNode node;
     struct SystemSimu simu;
-};
-
+} SIMU;
 
 
 int SimuInit(void);
 
-struct Simulator * SimuCreate(void);
-int  SimuDelete(struct Simulator *);
+SIMU * SimuCreate(void);
+int  SimuDelete(SIMU *);
 
-int SimuReSize(struct Simulator *);
+int SimuReSize(SIMU *);
 
-int Simulate(struct Simulator *);
+int Simulate(SIMU *);
 
-void SendSignal(SENDFORM, SIGNAL);
 void Transfer(SENDFORM, SIGNAL);
-void SendInteger(SENDFORM, DEFT_WORD);
+void SendSignal(SENDFORM, SIGNAL);
 
-void SimuResetNextExec(struct Simulator *);
-void SimuResetSentList(struct Simulator *);
-void SimuListofNextExec(struct Simulator *);
-void SimuListofSentList(struct Simulator *);
 
-int  SimuThreadSetNum(struct Simulator *, unsigned long long);
+void SimuResetNextExec(SIMU *);
+void SimuResetSentList(SIMU *);
+void SimuListofNextExec(SIMU *);
+void SimuListofSentList(SIMU *);
+
+NODEID SimuMakeList(SIMU *);
+
+int  SimuThreadSetNum(SIMU *, unsigned long long);
 unsigned long long SimuThreadGetNum(struct SystemThread *);
-NODEID SimuMakeList(struct Simulator *);
 void SimuTickMode(struct SystemThread *);
 void SimuStepMode(struct SystemThread *);
 bool SimuGetSimMode(struct SystemThread *);

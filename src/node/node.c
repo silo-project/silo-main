@@ -4,18 +4,35 @@
 #include <stdlib.h>
 #include "../include/define.h"
 #include "../include/node/node.h"
+#include "../include/simulator/simulator.h"
+
+typedef struct Simulator SIMU;
 
 // initialization node management system
-int NodeInit(struct Simulator * s) {
-	s->node.size = BASICMEM;
-	s->node.list = (NODE**)malloc(s->node.size);
-	s->node.last = s->node.number = 0;
-	
-	if (s->node.list == NULL)
-		return 1;
+int NodeInit(SIMU * s) {
+    s->node.size = BASICMEM;
+    s->node.list = (NODE**)malloc(s->node.size);
+    s->node.last = s->node.number = 0;
+    
+    if (s->node.list == NULL)
+        return 1;
     return 0;
 }
-NODE * NodeCreate(struct Simulator * s) {
+int NodeSysReset(SIMU * s) {
+    NODEID i;
+    
+    for (i = 0; i < s->node.last; i++)
+        NodeDelete(s->node.list[i]);
+    s->node.size = BASICMEM;
+    s->node.list = realloc(s->node.list, s->node.size);
+    s->node.last = s->node.number = 0;
+    
+    if (s->node.list == NULL)
+        return 1;
+    return 0;
+}
+
+NODE * NodeCreate(SIMU * s) {
     NODE * p = (NODE*)malloc(sizeof(NODE));
 	NODEID nodeid;
 	
@@ -35,58 +52,57 @@ NODE * NodeCreate(struct Simulator * s) {
         s->node.list = q;
     }
     
-	p->nodeid    = nodeid;
-    p->function  = NULL;
+	p->ndid = nodeid;
+    p->func = NULL;
     p->simu = s;
     
-    p->size_attribute = 0;
-    p->size_storage   = 0;
-    p->size_input     = 0;
-    p->size_output    = 0;
+    p->size.attr = 0;
+    p->size.data = 0;
+    p->size.srce = 0;
+    p->size.dest = 0;
     
-	p->attribute = malloc(0);
-	p->storage   = malloc(0);
-	p->input     = malloc(0);
-	p->output    = malloc(0);
+	p->attr = malloc(0);
+	p->data = malloc(0);
+	p->srce = malloc(0);
+	p->dest = malloc(0);
     
-    if (p->attribute == NULL || p->storage == NULL || p->input == NULL || p->output == NULL) {
-        if (p->attribute == NULL)
-            free(p->attribute);
-        if (p->storage == NULL)
-            free(p->storage);
-        if (p->input == NULL)
-            free(p->input);
-        if (p->output == NULL)
-            free(p->output);
+    if (p->attr == NULL || p->data == NULL || p->srce == NULL || p->dest == NULL) {
+        if (p->attr == NULL)
+            free(p->attr);
+        if (p->data == NULL)
+            free(p->data);
+        if (p->srce == NULL)
+            free(p->srce);
+        if (p->dest == NULL)
+            free(p->dest);
         printf("Node Create Error.\n");
         free(p);
         if ((s->node.last == s->node.number) && (s->node.last > 0))
             s->node.last = --s->node.number;
         else
             s->node.number--;
-        printf("debug 1\n");
         return NULL;
     }
     s->node.list[nodeid] = p;
 	return p;
 }
 void NodeDelete(NODE * node) {
-    struct SystemNode * n = &node->simu->node;
+    struct SystemNode * sn = &node->simu->node;
     
-    free(node->attribute);
-    free(node->storage);
-    free(node->input);
-    free(node->output);
-    n->list[node->nodeid] = NULL;
+    free(node->attr);
+    free(node->data);
+    free(node->srce);
+    free(node->dest);
+    sn->list[node->ndid] = NULL;
     
-    if (n->deleted) {
-        if (n->recycle > node->nodeid) {
-            n->recycle = node->nodeid;
+    if (sn->deleted) {
+        if (sn->recycle > node->ndid) {
+            sn->recycle = node->ndid;
         }
     }
     else {
-        n->recycle = node->nodeid;
-        n->deleted = true;
+        sn->recycle = node->ndid;
+        sn->deleted = true;
     }
     
     free(node);
@@ -97,23 +113,38 @@ NODE * NodeMakeCopy(NODE * p) { // duplication node
     if (q == NULL)
         return NULL;
     
-    NodeSetType(q, p->function);
-    
-    NodeUseStrg(q, p->size_attribute);
-    NodeUseAttr(q, p->size_storage);
-    NodeUseInpt(q, p->size_input);
-    NodeUseOupt(q, p->size_output);
-    
-    for (i = 0; i < p->size_attribute; i++)
-        q->attribute[i] = p->attribute[i];
-    for (i = 0; i < p->size_storage; i++)
-        q->storage[i] = p->storage[i];
-    for (i = 0; i < p->size_input; i++)
-        q->input[i] = p->input[i];
-    for (i = 0; i < p->size_output; i++)
-        q->output[i] = p->output[i];
+    if (NodeTypeCopy(q, p))
+        return NULL;
     
     return q;
+}
+int NodeTypeCopy(NODE * d, NODE * s) {
+    NODEID i;
+    
+    NodeSetType(d, s->func);
+
+    NodeSetMemAttr(d, s->size.data);
+    NodeSetMemData(d, s->size.attr);
+    NodeSetMemSrce(d, s->size.srce);
+    NodeSetMemDest(d, s->size.dest);
+    
+    for (i = 0; i < s->size.attr; i++)
+        d->attr[i] = s->attr[i];
+    for (i = 0; i < s->size.data; i++)
+        d->data[i] = s->data[i];
+    for (i = 0; i < s->size.srce; i++)
+        d->srce[i] = s->srce[i];
+    for (i = 0; i < s->size.dest; i++)
+        d->dest[i] = s->dest[i];
+    
+    d->simu = s->simu;
+    return 0;
+}
+int NodeMoveSimu(SIMU * s, NODE * n) {
+    NODE * p = NodeCreate(s);
+    if (NodeTypeCopy(p, n))
+        return 1;
+    return 0;
 }
 
 NODEID NodeGetID(struct SystemNode * n) {

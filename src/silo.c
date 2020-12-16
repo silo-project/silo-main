@@ -80,14 +80,13 @@ int main(int argc, char ** argv) {
         if (p == NULL)
             return 1;
 		NodeSetType(p, GateBusyWait);
-		NodeUseInpt(p, 1);
-		NodeUseOupt(p, 1);
+		NodeSetMemSrce(p, 1);
+		NodeSetMemDest(p, 1);
 		
 		s.node = p;
-		NodeSetOupt(p, 0, s);
-		NodeSetSim(p, simulator);
+		NodeSetDest(p, 0, s);
         
-		printf("node created : %lld, pointer : %p\n", p->nodeid, &p->nodeid);
+		printf("node created : %lld, pointer : %p\n", p->ndid, &p->ndid);
         fflush(stdout);
 	}
     

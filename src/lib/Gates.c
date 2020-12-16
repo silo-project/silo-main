@@ -15,21 +15,21 @@
 void Gates_NOT_Gate(NODE * node) {
     SIGNAL i, o;
     
-    i = node->input[0];
+    i = node->srce[0];
     o.value =  SigGetSpeci(i);
     o.state =  SigGetSpeci(i);
     o.value = ~SigGetLogic(i);
-    SendSignal(node->output[0], o);
+    SendSignal(node->dest[0], o);
 }
 
 void Gates_Buffer(NODE * node) {
     SIGNAL i, o;
     
-    i = node->input[0];
+    i = node->srce[0];
     o.value = SigGetSpeci(i);
     o.state = SigGetSpeci(i);
     o.value = SigGetLogic(i);
-    SendSignal(node->output[0], o);
+    SendSignal(node->dest[0], o);
 }
 
 /*

@@ -6,8 +6,6 @@ set(PATH_LIB src/lib)
 
 add_subdirectory(src)
 
-add_compile_options(-lpthread -g -O0)
-
 add_library(
     base
     STATIC
@@ -15,6 +13,10 @@ add_library(
     ${PATH_LIB}/Gates.c
     ${PATH_LIB}/Memory.c
 )
+
+add_compile_options(-lpthread -g -O0)
+
+
 
 target_link_libraries(
     silo

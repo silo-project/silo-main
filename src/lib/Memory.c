@@ -21,10 +21,10 @@ oupt[0] : output
 */
     SIGNAL s;
     s.state = -1;
-    if (SigChkTypeEdge(&node->storage[0], SigGetLogic(node->input[0]), node->attribute[0])) {
-        node->storage[1] = (node->storage[1] & ~node->input[1].state) | node->input[1].value;
-        s.value = node->storage[1];
-        SendSignal(node->output[0], s);
+    if (SigChkTypeEdge(&node->data[0], SigGetLogic(node->srce[0]), node->attr[0])) {
+        node->data[1] = (node->data[1] & ~node->srce[1].state) | node->srce[1].value;
+        s.value = node->data[1];
+        SendSignal(node->dest[0], s);
     }
 }
 
@@ -44,14 +44,14 @@ oupt[0] : output
 */
     SIGNAL s;
     s.state = -1;
-    if (SigChkTypeEdge(&node->storage[0], SigGetLogic(node->input[0]), node->attribute[0])) {
-        if (SigGetLogic(node->input[2])) {
-            if (SigGetLogic(node->input[3]))
-                node->storage[1]--;
+    if (SigChkTypeEdge(&node->data[0], SigGetLogic(node->srce[0]), node->attr[0])) {
+        if (SigGetLogic(node->srce[2])) {
+            if (SigGetLogic(node->srce[3]))
+                node->data[1]--;
             else
-                node->storage[1]++;
+                node->data[1]++;
         }
-        else if (SigGetLogic(node->input[3]))
-            node->storage[1] = SigGetLogic(node->input[1]);
+        else if (SigGetLogic(node->srce[3]))
+            node->data[1] = SigGetLogic(node->srce[1]);
     }
 }

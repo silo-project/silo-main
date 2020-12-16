@@ -13,6 +13,8 @@
 #include <signal.h>
 #include <pthread.h>
 
+#include "simu_debug.c"
+
 #include "../include/define.h"
 #include "../include/node/node.h"
 #include "../include/simulator/simulator.h"
@@ -30,9 +32,10 @@ static inline void SimuThreadSignal(struct SystemSimu *);
 
 
 
-struct Simulator * SimuCreate(void) {
-    struct Simulator * s = malloc(sizeof(struct Simulator));
-    if (s == NULL)
+SIMU * SimuCreate(void) {
+    SIMU * s;
+    
+    if ((s = malloc(sizeof(SIMU))) == NULL)
         return NULL;
     
     int init_cnd, init_mtx, init_thr, init_tthr;
@@ -113,7 +116,7 @@ static int SimuThreadInit(struct SystemThread * t) {
     }
 	return 0;
 }
-int  SimuDelete(struct Simulator * s) {
+int  SimuDelete(SIMU * s) {
     if (SimuThreadSetNum(s, 0))
         return 1;
     
@@ -139,38 +142,18 @@ int  SimuDelete(struct Simulator * s) {
     return 0;
 }
 
-void SimuResetNextExec(struct Simulator * s) {
-	for (NODEID i = 0; i < NodeGetLastID(&s->node); i++)
-		s->simu.nextexec[i] = NULL;
-    s->simu.nextemax = 0;
-}
-void SimuResetSentList(struct Simulator * s) {
-	for (NODEID i = 0; i < NodeGetLastID(&s->node); i++)
-		s->simu.sentlist[i] = false;
-}
-void SimuListofNextExec(struct Simulator * s) {
-    for (NODEID i = 0; i < NodeGetLastID(&s->node); i++)
-        printf("NextExec(%lld) : %p\n", i, s->simu.nextexec[i]);
-}
-void SimuListofSentList(struct Simulator * s) {
-    printf("SentList : ");
-    
-    for (NODEID i = 0; i < NodeGetLastID(&s->node); i++)
-        printf("%d ", s->simu.sentlist[i]);
-}
-
 void SendSignal(SENDFORM dest, SIGNAL signal) {
-	dest.node->input[dest.port] = signal;
-    dest.node->simu->simu.sentlist[dest.node->nodeid] = true;
+	dest.node->srce[dest.port] = signal;
+    dest.node->simu->simu.sentlist[dest.node->ndid] = true;
 }
 void Transfer(SENDFORM dest, SIGNAL signal) {
-	dest.node->input[dest.port] = signal;
-    dest.node->simu->simu.sentlist[dest.node->nodeid] = true;
+	dest.node->srce[dest.port] = signal;
+    dest.node->simu->simu.sentlist[dest.node->ndid] = true;
     dest.node->simu->simu.needmake = true;
 }
 
 
-NODEID SimuMakeList(struct Simulator * s) {
+NODEID SimuMakeList(SIMU * s) {
 	NODEID i, j, k;
 	
 	for (i = j = 0, k = NodeGetLastID(&s->node); i < k; i++) {
@@ -184,7 +167,7 @@ NODEID SimuMakeList(struct Simulator * s) {
     return j;
 }
 
-int SimuReSize(struct Simulator * s) {
+int SimuReSize(SIMU * s) {
 	void * p, * q;
 	
 	p = realloc(s->simu.nextexec, sizeof(NODE*) * NodeGetLastID(&s->node));
@@ -196,7 +179,7 @@ int SimuReSize(struct Simulator * s) {
 	return 0;
 }
 
-int SimuThreadSetNum(struct Simulator * s, unsigned long long n) {
+int SimuThreadSetNum(SIMU * s, unsigned long long n) {
 	unsigned long long i;
 	void * p, * q;
 	
@@ -242,7 +225,7 @@ void SimuStepMode(struct SystemThread * t) { t->mode = 1; }
 bool SimuGetSimMode(struct SystemThread * t) { return t->mode; }
 
 
-inline int Simulate(struct Simulator * s) {
+inline int Simulate(SIMU * s) {
     pthread_mutex_lock(s->simu.thread.tmtx);
     pthread_cond_signal(s->simu.thread.tcond);
     pthread_mutex_unlock(s->simu.thread.tmtx);
@@ -255,14 +238,14 @@ inline int Simulate(struct Simulator * s) {
 static void * thread_main(void * p) {
     NODEID i, j;
     struct ThreadArgument * arg = (struct ThreadArgument *)p;
-    struct Simulator      * s   = (struct Simulator      *)arg->simulator;
+    SIMU * s   = (SIMU *)arg->simulator;
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
     
     while (true) {
         SimuThreadWait(&s->simu); // this
         
         for (i = arg->workid; i < s->simu.nextemax; i += s->simu.thread.number)
-            s->simu.nextexec[i]->function(s->simu.nextexec[i]);
+            s->simu.nextexec[i]->func(s->simu.nextexec[i]);
         
         SimuThreadWait(&s->simu);
         
@@ -282,18 +265,17 @@ static void * thread_main(void * p) {
 }
 static void * thread_controller(void * p) {
     register NODEID i, h, l;
-    static unsigned long long count = 0;
     
-    struct Simulator * s = (struct Simulator *)p;
+    struct Simulator * s = (SIMU *)p;
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_mutex_lock(s->simu.thread.tmtx);
 
     
     while (true) {
-        printf("count : %lld\n", count++);
-        
-        s->simu.thread.status = 0;
-        pthread_cond_wait(s->simu.thread.tcond, s->simu.thread.tmtx);
-        s->simu.thread.status = 1;
+        if (s->simu.thread.mode || !s->simu.nextemax) {
+            pthread_cond_wait(s->simu.thread.tcond, s->simu.thread.tmtx);
+            
+        }
         
         if (s->simu.needmake)
             SimuMakeList(s);

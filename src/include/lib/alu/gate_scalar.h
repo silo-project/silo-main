@@ -1,8 +1,6 @@
 #ifndef SILO_GATE_HEAD
 #define SILO_GATE_HEAD
 
-#include "../../node/node.h"
-
 void GateADD(NODE *);
 void GateSUB(NODE *);
 void GateMUL(NODE *);

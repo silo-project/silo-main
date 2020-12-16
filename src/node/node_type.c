@@ -12,65 +12,66 @@
 #include "../include/node/node_type.h"
 
 // how much using a memory?
-int NodeUseAttr(NODE * node, DEFT_ADDR size) {
-	void * p = realloc(node->attribute, sizeof(DEFT_WORD) * size);
+int NodeSetMemAttr(NODE * node, DEFT_ADDR size) {
+	void * p = realloc(node->attr, sizeof(DEFT_WORD) * size);
 	
 	if (p == NULL)
 		return 1;
-    node->attribute = p;
-    node->size_attribute = size;
+    node->attr = p;
+    node->size.attr = size;
 	return 0;
 }
-int NodeUseStrg(NODE * node, DEFT_ADDR size) {
-	void * p = realloc(node->storage, sizeof(VALUE) * size);
+int NodeSetMemData(NODE * node, DEFT_ADDR size) {
+	void * p = realloc(node->data, sizeof(VALUE) * size);
 	
 	if (p == NULL)
 		return 1;
-    node->storage = p;
-    node->size_storage = size;
+    node->data = p;
+    node->size.data = size;
 	return 0;
 }
-int NodeUseInpt(NODE * node, DEFT_ADDR size) {
-	void * p = realloc(node->input, sizeof(SIGNAL) * size);
+int NodeSetMemSrce(NODE * node, DEFT_ADDR size) {
+	void * p = realloc(node->srce, sizeof(SIGNAL) * size);
 	
 	if (p == NULL)
 		return 1;
-    node->input = p;
-    node->size_input = size;
+    node->srce = p;
+    node->size.srce = size;
 	return 0;
 }
-int NodeUseOupt(NODE * node, DEFT_ADDR size) {
-	void * p = realloc(node->output, sizeof(SENDFORM) * size);
+int NodeSetMemDest(NODE * node, DEFT_ADDR size) {
+	void * p = realloc(node->dest, sizeof(SENDFORM) * size);
     
 	if (p == NULL)
 		return 1;
-    node->output = p;
-    node->size_output = size;
+    node->dest = p;
+    node->size.dest = size;
 	return 0;
 }
+DEFT_ADDR NodeGetMemAttr(NODE * node) { return node->size.attr; }
+DEFT_ADDR NodeGetMemStrg(NODE * node) { return node->size.data; }
+DEFT_ADDR NodeGetMemInpt(NODE * node) { return node->size.srce; }
+DEFT_ADDR NodeGetMemOupt(NODE * node) { return node->size.dest; }
 
 // node configuration
-void NodeSetType(NODE * node, void (*function)(NODE*))         { node->function         = function; }
-void NodeSetAttr(NODE * node, DEFT_WORD attr, DEFT_ADDR offset) { node->attribute[offset] = attr; }
-void NodeSetOupt(NODE * node, PORTID portid, SENDFORM dest) { node->output[portid] = dest; }
+void NodeSetType(NODE * node, void (*func)(NODE*))         { node->func         = func; }
+void NodeSetAttr(NODE * node, DEFT_WORD attr, DEFT_ADDR offset) { node->attr[offset] = attr; }
+void NodeSetDest(NODE * node, PORTID portid, SENDFORM dst) { node->dest[portid] = dst; }
 
 // node configuration array type
 void NodeSetAttrs(NODE * node, DEFT_WORD * attr, DEFT_ADDR maxlen) {
     DEFT_ADDR i;
     
     for (i = 0; i < maxlen; i++)
-        node->attribute[i] = attr[i];
+        node->attr[i] = attr[i];
     return;
 }
 void NodeSetOupts(NODE * node, SENDFORM * target, DEFT_ADDR maxlen) {
     DEFT_ADDR i;
     
     for (i = 0; i < maxlen; i++)
-        node->output[i] = target[i];
+        node->dest[i] = target[i];
     return;
 }
-
-void NodeSetSim(NODE * node, struct Simulator * s) { node->simu = s; }
-struct Simulator * NodeGetSim(NODE * node) { return node->simu; }
 
 
