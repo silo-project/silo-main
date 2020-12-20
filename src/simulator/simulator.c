@@ -13,6 +13,7 @@
 #include <signal.h>
 #include <pthread.h>
 
+#include "simu_signal.c"
 #include "simu_debug.c"
 
 #include "../include/define.h"
@@ -24,8 +25,8 @@
  
 // declaration
 static int    SimuThreadInit(struct SystemThread *);
-static void * thread_main(void *);
-static void * thread_controller(void * p);
+static void * SimuThreadMain(void *);
+static void * SimuThreadController(void * p);
 
 static inline void SimuThreadWait(struct SystemSimu *);
 static inline void SimuThreadSignal(struct SystemSimu *);
@@ -34,20 +35,20 @@ static inline void SimuThreadSignal(struct SystemSimu *);
 
 SIMU * SimuCreate(void) {
     SIMU * s;
+    int init_cnd, init_mtx, init_thr, init_tthr;
     
     if ((s = malloc(sizeof(SIMU))) == NULL)
         return NULL;
     
-    int init_cnd, init_mtx, init_thr, init_tthr;
-    
-	s->simu.nextexec = (NODE**)malloc(BASICMEM);
-	s->simu.nextemax = 0;
-	s->simu.sentlist = (char *)malloc(BASICMEM);
-	s->simu.needmake = true;
+    s->simu.nextexec = (NODE**)malloc(BASICMEM);
+    s->simu.nextemax = 0;
+    s->simu.sentlist = (char *)malloc(BASICMEM);
+    s->simu.needmake = true;
     s->simu.thread.status = 1;
 
     
     SimuStepMode(&s->simu.thread);
+    s->simu.thread.tickendhandler = NULL;
     
     s->simu.attr = (pthread_attr_t *)malloc(sizeof(pthread_attr_t));
     s->simu.cond = (pthread_cond_t  *)malloc(sizeof(pthread_cond_t));
@@ -58,14 +59,16 @@ SIMU * SimuCreate(void) {
     pthread_attr_setdetachstate(s->simu.attr, PTHREAD_CREATE_DETACHED);
     
     init_cnd = pthread_cond_init(s->simu.cond, NULL);
-	init_mtx = pthread_mutex_init(s->simu.mtx, NULL);
+    init_mtx = pthread_mutex_init(s->simu.mtx, NULL);
     
     if (SimuThreadInit(&s->simu.thread))
         printf("error\n");
+    s->simu.thread.tcontrol = malloc(sizeof(pthread_t));
+    pthread_create(s->simu.thread.tcontrol, s->simu.attr, SimuThreadController, (void*)s);
     
-	init_thr = SimuThreadSetNum(s, DEFT_THREAD_NUMBER);
+    init_thr = SimuThreadSetNum(s, DEFT_THREAD_NUMBER);
 
-	if (s->simu.nextexec==NULL || s->simu.sentlist==NULL || init_cnd || init_mtx || init_thr || init_tthr) {
+    if (s->simu.nextexec==NULL || s->simu.sentlist==NULL || init_cnd || init_mtx || init_thr || init_tthr) {
         if (s->simu.nextexec != NULL)
             free(s->simu.nextexec);
         if (s->simu.sentlist != NULL)
@@ -142,16 +145,8 @@ int  SimuDelete(SIMU * s) {
     return 0;
 }
 
-void SendSignal(SENDFORM dest, SIGNAL signal) {
-	dest.node->srce[dest.port] = signal;
-    dest.node->simu->simu.sentlist[dest.node->ndid] = true;
-}
-void Transfer(SENDFORM dest, SIGNAL signal) {
-	dest.node->srce[dest.port] = signal;
-    dest.node->simu->simu.sentlist[dest.node->ndid] = true;
-    dest.node->simu->simu.needmake = true;
-}
-
+void SimuTickMode(struct SystemThread * t) { t->mode = 0; }
+void SimuStepMode(struct SystemThread * t) { t->mode = 1; }
 
 NODEID SimuMakeList(SIMU * s) {
 	NODEID i, j, k;
@@ -196,7 +191,7 @@ int SimuThreadSetNum(SIMU * s, unsigned long long n) {
             s->simu.thread.argptr[i]->workid    = i;
             s->simu.thread.argptr[i]->simulator = s;
             s->simu.thread.tidptr[i] = malloc(sizeof(pthread_t));
-			pthread_create(s->simu.thread.tidptr[i], s->simu.attr, thread_main, (void*)s->simu.thread.argptr[i]);
+			pthread_create(s->simu.thread.tidptr[i], s->simu.attr, SimuThreadMain, (void*)s->simu.thread.argptr[i]);
 		}
 	}
 	else if (n < s->simu.thread.number) { // delete thread
@@ -220,8 +215,6 @@ int SimuThreadSetNum(SIMU * s, unsigned long long n) {
 }
 unsigned long long SimuThreadGetNum(struct SystemThread * t) { return t->number; }
 
-void SimuTickMode(struct SystemThread * t) { t->mode = 0; }
-void SimuStepMode(struct SystemThread * t) { t->mode = 1; }
 bool SimuGetSimMode(struct SystemThread * t) { return t->mode; }
 
 
@@ -235,7 +228,7 @@ inline int Simulate(SIMU * s) {
 // don't change
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
-static void * thread_main(void * p) {
+static void * SimuThreadMain(void * p) {
     NODEID i, j;
     struct ThreadArgument * arg = (struct ThreadArgument *)p;
     SIMU * s   = (SIMU *)arg->simulator;
@@ -263,8 +256,9 @@ static void * thread_main(void * p) {
     }
     return (void *)NULL; // dummy
 }
-static void * thread_controller(void * p) {
+static void * SimuThreadController(void * p) {
     register NODEID i, h, l;
+    unsigned long long count = 0;
     
     struct Simulator * s = (SIMU *)p;
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
@@ -276,7 +270,7 @@ static void * thread_controller(void * p) {
             pthread_cond_wait(s->simu.thread.tcond, s->simu.thread.tmtx);
             
         }
-        
+        printf("count : %lld\n", count++);
         if (s->simu.needmake)
             SimuMakeList(s);
         

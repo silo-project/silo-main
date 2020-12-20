@@ -22,7 +22,7 @@ struct SystemThread {
     pthread_mutex_t * tmtx;
     bool status; // 0 == waiting, 1 == running
     bool mode; // 0 == tick mode, 1 == step mode
-    bool clock;
+    void (*tickendhandler)(void*);
 };
 
 #endif

@@ -11,17 +11,26 @@
 #include "../define.h"
 #include "../signal.h"
 
+// decl
 typedef struct Simulator  SIMU;
 typedef struct nodestruct NODE;
 typedef struct sendformat SENDFORM;
 
+// defi
 struct NodeMemorySize {
     DEFT_ADDR attr;
     DEFT_ADDR data;
     DEFT_ADDR srce;
     DEFT_ADDR dest;
 };
-
+struct SystemNode {
+    NODE** list; // array of a node structure pointer
+    DEFT_ADDR size; // size of node_list
+    NODEID last;
+    NODEID number; // valid nodes count
+    NODEID recycle;
+    bool   deleted;
+};
 
 typedef struct nodestruct {
     NODEID      ndid;
@@ -38,14 +47,7 @@ typedef struct sendformat {
 	PORTID port;
 } SENDFORM;
 
-struct SystemNode {
-    NODE** list; // array of a node structure pointer
-    DEFT_ADDR size; // size of node_list
-    NODEID last;
-    NODEID number; // valid nodes count
-    NODEID recycle;
-    bool   deleted;
-};
+
 
 // functions
 int NodeInit(SIMU *);
@@ -53,13 +55,18 @@ int NodeSysReset(SIMU *);
 
 NODE * NodeCreate(SIMU *);
 void   NodeDelete(NODE *);
+
 NODE * NodeMakeCopy(NODE *);
 int    NodeTypeCopy(NODE * dst, NODE * src);
+int    NodeDataCopy(NODE * dst, NODE * src);
 int    NodeMoveSimu(SIMU *, NODE *);
 
-void NodeRecycle(NODEID);
+
+
+
 
 NODEID NodeGetID(struct SystemNode *); // get a usable(creatable) nodeid
+void   NodeSetID(struct SystemNode *, NODEID); // return a nodeid no longer in use
 NODEID NodeGetNumber(struct SystemNode *);
 NODEID NodeGetLastID(struct SystemNode *);
 NODE * NodeGetPtr(struct SystemNode *, NODEID);

@@ -45,10 +45,8 @@ NODE * NodeCreate(SIMU * s) {
         
         q = (NODE**)realloc((void*)s->node.list, s->node.size);
         
-        if (p == NULL || q == NULL) {
-            printf("p : %p, q : %p\n", p, q);
+        if (p == NULL || q == NULL)
             return NULL;
-        }
         s->node.list = q;
     }
     
@@ -75,7 +73,6 @@ NODE * NodeCreate(SIMU * s) {
             free(p->srce);
         if (p->dest == NULL)
             free(p->dest);
-        printf("Node Create Error.\n");
         free(p);
         if ((s->node.last == s->node.number) && (s->node.last > 0))
             s->node.last = --s->node.number;
@@ -87,26 +84,27 @@ NODE * NodeCreate(SIMU * s) {
 	return p;
 }
 void NodeDelete(NODE * node) {
-    struct SystemNode * sn = &node->simu->node;
+    struct SystemNode * n = &node->simu->node;
     
     free(node->attr);
     free(node->data);
     free(node->srce);
     free(node->dest);
-    sn->list[node->ndid] = NULL;
+    n->list[node->ndid] = NULL;
     
-    if (sn->deleted) {
-        if (sn->recycle > node->ndid) {
-            sn->recycle = node->ndid;
+    if (n->deleted) {
+        if (n->recycle > node->ndid) {
+            n->recycle = node->ndid;
         }
     }
     else {
-        sn->recycle = node->ndid;
-        sn->deleted = true;
+        n->recycle = node->ndid;
+        n->deleted = true;
     }
     
     free(node);
 }
+
 NODE * NodeMakeCopy(NODE * p) { // duplication node
     DEFT_ADDR i;
     NODE * q = NodeCreate(p->simu);
@@ -124,42 +122,60 @@ int NodeTypeCopy(NODE * d, NODE * s) {
     NodeSetType(d, s->func);
 
     NodeSetMemAttr(d, s->size.data);
-    NodeSetMemData(d, s->size.attr);
     NodeSetMemSrce(d, s->size.srce);
     NodeSetMemDest(d, s->size.dest);
     
     for (i = 0; i < s->size.attr; i++)
         d->attr[i] = s->attr[i];
-    for (i = 0; i < s->size.data; i++)
-        d->data[i] = s->data[i];
     for (i = 0; i < s->size.srce; i++)
         d->srce[i] = s->srce[i];
     for (i = 0; i < s->size.dest; i++)
         d->dest[i] = s->dest[i];
     
-    d->simu = s->simu;
     return 0;
 }
-int NodeMoveSimu(SIMU * s, NODE * n) {
-    NODE * p = NodeCreate(s);
-    if (NodeTypeCopy(p, n))
+int NodeDataCopy(NODE * d, NODE * s) {
+    NODEID i;
+    
+    NodeSetMemData(d, s->size.attr);
+    for (i = 0; i < s->size.data; i++)
+        d->data[i] = s->data[i];
+}
+
+int NodeMoveSimu(SIMU * simu, NODE * node) {
+    NODE * p = NodeCreate(simu);
+    if ((p = NodeCreate(simu)) == NULL)
         return 1;
+    NodeTypeCopy(p, node);
+    p->simu = node->simu;
+    NodeDelete(node);
     return 0;
 }
 
-NODEID NodeGetID(struct SystemNode * n) {
+NODEID NodeGetID(struct SystemNode * node) {
     NODEID i, j;
     
-    if (n->deleted) {
-        i = n->recycle;
-        for (j = i+1; n->list[j] != NULL; j++)
+    if (node->deleted) {
+        i = node->recycle;
+        for (j = 0; node->list[j] != NULL && j < node->number; j++)
             ;
-        n->recycle = j;
+        if (node->list[j] != NULL) {
+            node->deleted = false;
+        }
+        node->recycle = j;
         return i;
     }
     else
-        return n->last++;
+        return node->last++;
 }
+void NodeSetID(struct SystemNode * n, NODEID nodeid) {
+    if (n->deleted && n->recycle > nodeid)
+        n->recycle = nodeid;
+    else
+        
+    }
+}
+
 
 NODEID NodeGetNumber(struct SystemNode * n) { return n->number; }
 NODEID NodeGetLastID(struct SystemNode * n) { return n->last;   }
