@@ -10,10 +10,10 @@
 
 void SendSignal(SENDFORM dest, SIGNAL signal) {
 	dest.node->srce[dest.port] = signal;
-    dest.node->simu->simu.sentlist[dest.node->ndid] = true;
+	dest.node->simu->simu.sentlist[dest.node->ndid] = true;
 }
 void Transfer(SENDFORM dest, SIGNAL signal) {
 	dest.node->srce[dest.port] = signal;
-    dest.node->simu->simu.sentlist[dest.node->ndid] = true;
-    dest.node->simu->simu.needmake = true;
+	dest.node->simu->simu.sentlist[dest.node->ndid] = true;
+	dest.node->simu->simu.needmake = true;
 }

@@ -13,23 +13,23 @@
 
 
 void Gates_NOT_Gate(NODE * node) {
-    SIGNAL i, o;
+	SIGNAL i, o;
     
-    i = node->srce[0];
-    o.value =  SigGetSpeci(i);
-    o.state =  SigGetSpeci(i);
-    o.value = ~SigGetLogic(i);
-    SendSignal(node->dest[0], o);
+	i = node->srce[0];
+	o.value =  SigGetSpeci(i);
+	o.state =  SigGetSpeci(i);
+	o.value = ~SigGetLogic(i);
+	SendSignal(node->dest[0], o);
 }
 
 void Gates_Buffer(NODE * node) {
-    SIGNAL i, o;
+	SIGNAL i, o;
     
-    i = node->srce[0];
-    o.value = SigGetSpeci(i);
-    o.state = SigGetSpeci(i);
-    o.value = SigGetLogic(i);
-    SendSignal(node->dest[0], o);
+	i = node->srce[0];
+	o.value = SigGetSpeci(i);
+	o.state = SigGetSpeci(i);
+	o.value = SigGetLogic(i);
+	SendSignal(node->dest[0], o);
 }
 
 /*
@@ -38,19 +38,18 @@ void Gates_AND_Gate(NODE * node) {
 // attr[0] = number of inputs
 // attr[1] = negate
 
-    SIGNAL x, y;
-    DEFT_WORD inputs, negate, bitcnt, i;
+	SIGNAL x, y;
+	DEFT_WORD inputs, negate, bitcnt, i;
     
-    inputs = node->attribute[0];
-    negate = node->attribute[1];
+	inputs = node->attribute[0];
+	negate = node->attribute[1];
     
-    for (i = 0, bitcnt = 1; i < inputs; i++, bitcnt <<= 1) {
-        x.value = (negate & bitcnt) ? ~SigGetLogic(node->input[i]) : node->input[i].value;
-        x.state = node->input[i].state;
+	for (i = 0, bitcnt = 1; i < inputs; i++, bitcnt <<= 1) {
+		x.value = (negate & bitcnt) ? ~SigGetLogic(node->input[i]) : node->input[i].value;
+		x.state = node->input[i].state;
         
-        x.value
-        
-    }
+		x.value
+	}
 }
 
 /*

@@ -12,19 +12,19 @@ typedef struct signalstruct SIGNAL;
 typedef struct Simulator SIMU;
 
 struct SystemSimu {
-    NODE** nextexec;
-    NODEID nextemax;
-    char * sentlist;
-    bool   needmake;
-    pthread_cond_t * cond;
-    pthread_mutex_t * mtx;
-    pthread_attr_t * attr;
-    struct SystemThread thread;
+	NODE** nextexec;
+	NODEID nextemax;
+	char * sentlist;
+	bool   needmake;
+	pthread_cond_t * cond;
+	pthread_mutex_t * mtx;
+	pthread_attr_t * attr;
+	struct SystemThread thread;
 };
 
 typedef struct Simulator {
-    struct SystemNode node;
-    struct SystemSimu simu;
+	struct SystemNode node;
+	struct SystemSimu simu;
 } SIMU;
 
 

@@ -18,29 +18,29 @@ typedef struct sendformat SENDFORM;
 
 // defi
 struct NodeMemorySize {
-    DEFT_ADDR attr;
-    DEFT_ADDR data;
-    DEFT_ADDR srce;
-    DEFT_ADDR dest;
+	DEFT_ADDR attr;
+	DEFT_ADDR data;
+	DEFT_ADDR srce;
+	DEFT_ADDR dest;
 };
 struct SystemNode {
-    NODE** list; // array of a node structure pointer
-    DEFT_ADDR size; // size of node_list
-    NODEID last;
-    NODEID number; // valid nodes count
-    NODEID recycle;
-    bool   deleted;
+	NODE** list; // array of a node structure pointer
+	DEFT_ADDR size; // size of node_list
+	NODEID last;
+	NODEID number; // valid nodes count
+	NODEID recycle;
+	bool   deleted;
 };
 
 typedef struct nodestruct {
-    NODEID      ndid;
-    SIMU      * simu;
-    void     (* func)(NODE*);
-    DEFT_WORD * attr;
-    VALUE     * data;
-    SIGNAL    * srce;
-    SENDFORM  * dest;
-    struct NodeMemorySize size;
+	NODEID      ndid;
+	SIMU      * simu;
+	void     (* func)(NODE*);
+	DEFT_WORD * attr;
+	VALUE     * data;
+	SIGNAL    * srce;
+	SENDFORM  * dest;
+	struct NodeMemorySize size;
 } NODE;
 typedef struct sendformat {
 	NODE * node;
