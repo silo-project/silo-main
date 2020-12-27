@@ -6,7 +6,7 @@
 struct ThreadArgument {
 	DEFT_WORD workid;
 	DEFT_WORD makemx;
-	struct Simulator * simulator;
+	SIMU * simulator;
 };
 
 struct SystemThread {
@@ -14,6 +14,7 @@ struct SystemThread {
 	pthread_t ** tidptr;
 	struct ThreadArgument ** argptr;
 	DEFT_WORD endcount;
+	DEFT_WORD stepcount;
 	pthread_cond_t * cond;
 	pthread_mutex_t * mtx;
 
@@ -22,7 +23,10 @@ struct SystemThread {
 	pthread_mutex_t * tmtx;
 	bool status; // 0 == waiting, 1 == running
 	bool mode; // 0 == tick mode, 1 == step mode
-	void (*tickendhandler)(void*);
+	DEFT_WORD maxres;
+	
+	NODE * clock;
+	DEFT_WORD clmax;
 };
 
 #endif

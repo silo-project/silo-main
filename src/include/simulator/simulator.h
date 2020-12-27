@@ -18,6 +18,8 @@ struct SystemSimu {
 	bool   needmake;
 	pthread_cond_t * cond;
 	pthread_mutex_t * mtx;
+	pthread_cond_t * makecond;
+	pthread_mutex_t * makemtx;
 	pthread_attr_t * attr;
 	struct SystemThread thread;
 };
@@ -33,13 +35,15 @@ int SimuInit(void);
 SIMU * SimuCreate(void);
 int  SimuDelete(SIMU *);
 
+DEFT_WORD SimuCreateClock(SIMU *, NODE *);
+void SimuDeleteClock(SIMU *, DEFT_WORD);
+
 int SimuReSize(SIMU *);
 
 int Simulate(SIMU *);
 
 void Transfer(SENDFORM, SIGNAL);
 void SendSignal(SENDFORM, SIGNAL);
-
 
 void SimuResetNextExec(SIMU *);
 void SimuResetSentList(SIMU *);

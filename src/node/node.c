@@ -168,13 +168,15 @@ NODEID NodeGetID(struct SystemNode * node) {
 	else
 	return node->last++;
 }
-void NodeSetID(struct SystemNode * n, NODEID nodeid) {
-	if (n->deleted && n->recycle > nodeid)
-		n->recycle = nodeid;
-	else
-		//
-    }
+void NodeSetID(struct SystemNode * node, NODEID nodeid) {
+	if (node->deleted && node->recycle > nodeid)
+		node->recycle = nodeid;
+	else {
+		node->recycle = -1;
+		node->deleted = false;
+	}
 }
+bool NodeCheckID(struct SystemNode * node, NODEID nodeid) { return node->list[nodeid]->func != NULL; }
 
 
 NODEID NodeGetNumber(struct SystemNode * n) { return n->number; }

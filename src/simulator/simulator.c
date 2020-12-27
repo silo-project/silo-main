@@ -104,6 +104,8 @@ static int SimuThreadInit(struct SystemThread * t) {
 	t->argptr = (struct ThreadArgument **)malloc(0);
 	t->tidptr = (pthread_t             **)malloc(0);
 	
+	t->maxres = DEFT_SIM_MAXRES;
+	
 	if (t->argptr==NULL || t->tidptr==NULL || init_tcnd || init_tmtx) {
 		if (t->argptr != NULL)
 			free(t->argptr);
@@ -145,6 +147,8 @@ int  SimuDelete(SIMU * s) {
 
 void SimuTickMode(struct SystemThread * t) { t->mode = 0; }
 void SimuStepMode(struct SystemThread * t) { t->mode = 1; }
+
+
 
 NODEID SimuMakeList(SIMU * s) {
 	NODEID i, j, k;
@@ -227,24 +231,25 @@ inline int Simulate(SIMU * s) {
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 static void * SimuThreadMain(void * p) {
 	NODEID i, j;
+	register NODEID k;
 	struct ThreadArgument * arg = (struct ThreadArgument *)p;
 	SIMU * s   = (SIMU *)arg->simulator;
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	
 	while (true) {
-		SimuThreadWait(&s->simu); // this
-		for (i = arg->workid; i < s->simu.nextemax; i += s->simu.thread.number)
+		SimuThreadWait(&s->simu);
+		for (i = arg->workid, k = s->simu.nextemax; i < k; i += s->simu.thread.number)
 			s->simu.nextexec[i]->func(s->simu.nextexec[i]);
 
 		SimuThreadWait(&s->simu);
-		for (i = j = arg->workid; i < NodeGetLastID(&s->node); i += s->simu.thread.number) {
+		for (i = j = arg->workid, k = NodeGetLastID(&s->node); i < k; i += s->simu.thread.number) {
 			if (s->simu.sentlist[i]) {
 				s->simu.sentlist[i] = 0;
 				s->simu.nextexec[j] = NodeGetPtr(&s->node, i);
 				j += s->simu.thread.number;
 			}
 		}
-		for (i = j; i < NodeGetLastID(&s->node); i += s->simu.thread.number) {
+		for (i = j; i < k; i += s->simu.thread.number) {
 			s->simu.nextexec[i] = NULL;
 		}
 		arg->makemx = j;
@@ -253,18 +258,21 @@ static void * SimuThreadMain(void * p) {
 }
 static void * SimuThreadController(void * p) {
 	register NODEID i, h, l;
-	unsigned long long count = 0;
     
-	struct Simulator * s = (SIMU *)p;
+	SIMU * s = (SIMU *)p;
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	pthread_mutex_lock(s->simu.thread.tmtx);
+	
 
     
 	while (true) {
+		// wait a signal
+	wait:
 		if (s->simu.thread.mode || !s->simu.nextemax) {
+			printf("tick end.\n");
+			pthread_mutex_lock(s->simu.thread.tmtx);
 			pthread_cond_wait(s->simu.thread.tcond, s->simu.thread.tmtx);
+			pthread_mutex_unlock(s->simu.thread.tmtx);
 		}
-		printf("count : %lld\n", count++);
 		if (s->simu.needmake)
 			SimuMakeList(s);
         
@@ -285,19 +293,28 @@ static void * SimuThreadController(void * p) {
 				if (l < h)
 					s->simu.nextexec[l++] = s->simu.nextexec[h--];
 				else
-					continue;
+					break;
 			}
 			else
 				l++;
 		}
-		s->simu.needmake = false;
-		s->simu.nextemax = l;
+		if (!(s->simu.nextemax = l)) {
+			SimuThreadTickEndHandler(s);
+			goto wait;
+		}
+		if (++s->simu.thread.stepcount > s->simu.thread.maxres) {
+			printf("A Circuit is not response. (ERROR_TICK_IS_NOT_END)\n");
+			return (void *)NULL;
+		}
 	}
 	return (void *)NULL;
 }
 // don't change
 #pragma clang diagnostic pop
 
+static void SimuThreadTickEndHandler(SIMU * s) {
+	
+}
 
 
 static inline void SimuThreadWait(struct SystemSimu * s) {

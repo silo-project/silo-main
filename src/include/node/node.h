@@ -67,6 +67,8 @@ int    NodeMoveSimu(SIMU *, NODE *);
 
 NODEID NodeGetID(struct SystemNode *); // get a usable(creatable) nodeid
 void   NodeSetID(struct SystemNode *, NODEID); // return a nodeid no longer in use
+bool   NodeCheckID(struct SystemNode *, NODEID);
+
 NODEID NodeGetNumber(struct SystemNode *);
 NODEID NodeGetLastID(struct SystemNode *);
 NODE * NodeGetPtr(struct SystemNode *, NODEID);
