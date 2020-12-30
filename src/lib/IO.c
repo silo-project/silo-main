@@ -7,7 +7,7 @@
 void IO_PrintSignal(NODE * node) {
 	SIGNAL s;
 	NODEID i;
-	s = node->input[0];
+	s = node->sent[0];
 	
 	printf("PrintSignal : ");
     

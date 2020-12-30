@@ -17,12 +17,14 @@
 #include "simu_debug.c"
 
 #include "../include/define.h"
+#include "../include/wire.h"
 #include "../include/node/node.h"
 #include "../include/simulator/simulator.h"
 #include "../include/simulator/simulator_in.h"
 #include "../include/simulator/thread.h"
 
- 
+extern void SimuWakeUpNode(NODE *);
+
 // declaration
 static int    SimuThreadInit(struct SystemThread *);
 static void * SimuThreadMain(void *);

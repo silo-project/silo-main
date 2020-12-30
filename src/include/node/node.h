@@ -1,19 +1,21 @@
 /*
 	Name: silo node header
 	Copyright: SILO
-	Author: see AUTHOR file
-	Date: 04-10-20 18:17 (DD-MM-YY)
+	Author: see AUTHORS file
+	Date: 2020-10-04 18:17 (YYYY-MM-DD)
 	Description: define node-structure, send-form
 */
 #ifndef SILO_NODE_H
 #define SILO_NODE_H
 
 #include "../define.h"
+#include "../wire.h"
 #include "../signal.h"
 
 // decl
 typedef struct Simulator  SIMU;
 typedef struct nodestruct NODE;
+typedef struct silo_wire  WIRE;
 typedef struct sendformat SENDFORM;
 
 // defi
@@ -38,8 +40,8 @@ typedef struct nodestruct {
 	void     (* func)(NODE*);
 	DEFT_WORD * attr;
 	VALUE     * data;
-	SIGNAL    * srce;
-	SENDFORM  * dest;
+	SIGNAL    * sent;
+	WIRE      * send;
 	struct NodeMemorySize size;
 } NODE;
 typedef struct sendformat {
@@ -55,6 +57,10 @@ int NodeSysReset(SIMU *);
 
 NODE * NodeCreate(SIMU *);
 void   NodeDelete(NODE *);
+
+// create or delete as many node
+DEFT_ADDR NodeCreateMany(SIMU * simu, NODE ** buffer, DEFT_ADDR size);
+DEFT_ADDR NodeDeleteMany(NODE ** buffer, DEFT_ADDR size);
 
 NODE * NodeMakeCopy(NODE *);
 int    NodeTypeCopy(NODE * dst, NODE * src);

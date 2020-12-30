@@ -11,5 +11,5 @@ void Clock_clock(NODE * n) {
 	s.state = -1;
 	s.value = n->data[0] = !n->data[0];
 	
-	SendSignal(n->dest[0], s);
+	SimuTransfer(n->send[0], s);
 }

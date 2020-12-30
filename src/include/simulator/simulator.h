@@ -1,3 +1,10 @@
+/*
+	Name: silo simulator header for external
+	Copyright: SILO
+	Author: see AUTHORS file
+	Date: 2020-12-28 09:02 (YYYY-MM-DD)
+	Description: define simulator API, structure
+*/
 #ifndef SILO_SIMULATE_H
 #define SILO_SIMULATE_H
 
@@ -40,10 +47,11 @@ void SimuDeleteClock(SIMU *, DEFT_WORD);
 
 int SimuReSize(SIMU *);
 
-int Simulate(SIMU *);
+void SimuSendSignal(SENDFORM, SIGNAL);
+void SimuWakeUpNode(NODE *);
+void SimuTransfer(WIRE, SIGNAL);
 
-void Transfer(SENDFORM, SIGNAL);
-void SendSignal(SENDFORM, SIGNAL);
+int Simulate(SIMU *);
 
 void SimuResetNextExec(SIMU *);
 void SimuResetSentList(SIMU *);

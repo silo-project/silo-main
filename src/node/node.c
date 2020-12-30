@@ -104,6 +104,23 @@ void NodeDelete(NODE * node) {
 
 	free(node);
 }
+DEFT_ADDR NodeCreateMany(SIMU * simu, NODE ** buffer, DEFT_ADDR size) {
+	DEFT_ADDR i;
+	
+	for (i = 0; i < size; i++)
+		if ((buffer[i] = NodeCreate()) == NULL)
+			break;
+	
+	return i;
+}
+DEFT_ADDR NodeDeleteMany(NODE ** buffer, DEFT_ADDR size) {
+	DEFT_ADDR i;
+	
+	for (i = 0; i < size; i++)
+		NodeDelete(buffer[i]);
+	
+	return i;
+}
 
 NODE * NodeMakeCopy(NODE * p) { // duplication node
 	DEFT_ADDR i;

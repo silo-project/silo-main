@@ -10,20 +10,19 @@
 
 int  NodeSetMemAttr(NODE *, DEFT_ADDR);
 int  NodeSetMemData(NODE *, DEFT_ADDR);
-int  NodeSetMemSrce(NODE *, DEFT_ADDR);
-int  NodeSetMemDest(NODE *, DEFT_ADDR);
-
+int  NodeSetMemSent(NODE *, DEFT_ADDR);
+int  NodeSetMemSend(NODE *, DEFT_ADDR);
 
 DEFT_ADDR NodeGetMemAttr(NODE *);
 DEFT_ADDR NodeGetMemData(NODE *);
-DEFT_ADDR NodeGetMemSrce(NODE *);
-DEFT_ADDR NodeGetMemDest(NODE *);
+DEFT_ADDR NodeGetMemSent(NODE *);
+DEFT_ADDR NodeGetMemSend(NODE *);
 
 void NodeSetType(NODE * node, void (*fn)(NODE*));
 void NodeSetAttr(NODE * node, DEFT_WORD attr, DEFT_ADDR index);
 // input is not able
 // storage is not able
-void NodeSetDest(NODE * node, PORTID port, SENDFORM dest);
+void NodeSetSend(NODE * node, PORTID port, SENDFORM dest);
 
 
 

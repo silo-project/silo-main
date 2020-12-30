@@ -24,9 +24,4 @@ typedef DEFT_ADDR SIMUID;
 
 #define BASICMEM 4096 // 4KiB = 1Page
 
-typedef union unisign {
-	unsigned SILO_WORD uint;
-	SILO_WORD sint;
-} UNISIGN;
-
 #endif

@@ -30,33 +30,39 @@ int NodeSetMemData(NODE * node, DEFT_ADDR size) {
 	node->size.data = size;
 	return 0;
 }
-int NodeSetMemSrce(NODE * node, DEFT_ADDR size) {
+int NodeSetMemSent(NODE * node, DEFT_ADDR size) {
 	void * p = realloc(node->srce, sizeof(SIGNAL) * size);
 
 	if (p == NULL)
 		return 1;
 	node->srce = p;
-	node->size.srce = size;
+	node->size.sent = size;
 	return 0;
 }
-int NodeSetMemDest(NODE * node, DEFT_ADDR size) {
+int NodeSetMemSend(NODE * node, DEFT_ADDR size) {
 	void * p = realloc(node->dest, sizeof(SENDFORM) * size);
 
 	if (p == NULL)
 		return 1;
 	node->dest = p;
-	node->size.dest = size;
+	node->size.send = size;
 	return 0;
 }
 DEFT_ADDR NodeGetMemAttr(NODE * node) { return node->size.attr; }
 DEFT_ADDR NodeGetMemStrg(NODE * node) { return node->size.data; }
-DEFT_ADDR NodeGetMemInpt(NODE * node) { return node->size.srce; }
-DEFT_ADDR NodeGetMemOupt(NODE * node) { return node->size.dest; }
+DEFT_ADDR NodeGetMemSent(NODE * node) { return node->size.sent; }
+DEFT_ADDR NodeGetMemSend(NODE * node) { return node->size.send; }
 
 // node configuration
-void NodeSetType(NODE * node, void (*func)(NODE*))         { node->func         = func; }
-void NodeSetAttr(NODE * node, DEFT_WORD attr, DEFT_ADDR offset) { node->attr[offset] = attr; }
-void NodeSetDest(NODE * node, PORTID portid, SENDFORM dst) { node->dest[portid] = dst; }
+void NodeSetType(NODE * node, void (*func)(NODE*)) {
+	node->func = func;
+}
+void NodeSetAttr(NODE * node, DEFT_WORD attr, DEFT_ADDR offset) {
+	node->attr[offset] = attr;
+}
+void NodeSetSend(NODE * node, PORTID portid, SENDFORM dst) {
+	node->send[portid] = dst;
+}
 
 // node configuration array type
 void NodeSetAttrs(NODE * node, DEFT_WORD * attr, DEFT_ADDR maxlen) {
@@ -66,7 +72,7 @@ void NodeSetAttrs(NODE * node, DEFT_WORD * attr, DEFT_ADDR maxlen) {
 		node->attr[i] = attr[i];
 	return;
 }
-void NodeSetOupts(NODE * node, SENDFORM * target, DEFT_ADDR maxlen) {
+void NodeSetSends(NODE * node, SENDFORM * target, DEFT_ADDR maxlen) {
 	DEFT_ADDR i;
 
 	for (i = 0; i < maxlen; i++)
