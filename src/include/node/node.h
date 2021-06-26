@@ -1,9 +1,9 @@
 /*
-	Name: silo node header
-	Copyright: SILO
-	Author: see AUTHORS file
-	Date: 2020-10-04 18:17 (YYYY-MM-DD)
-	Description: define node-structure, send-form
+	Name : silo node header
+	Copyright : SILO
+	Author : see AUTHORS file
+	Last : 2021-03-27 11:31
+	Description : define node-structure, send-form
 */
 #ifndef SILO_NODE_H
 #define SILO_NODE_H
@@ -11,20 +11,14 @@
 #include "../define.h"
 #include "../wire.h"
 #include "../signal.h"
+#include "port.h"
 
-// decl
 typedef struct Simulator  SIMU;
-typedef struct nodestruct NODE;
-typedef struct silo_wire  WIRE;
-typedef struct sendformat SENDFORM;
+typedef struct silo_node_struct NodeStruct;
+typedef struct silo_node_port_physical NodePort;
+typedef struct silo_node_port_logical  NodeWire;
+typedef struct silo_sendformat SENDFORM;
 
-// defi
-struct NodeMemorySize {
-	DEFT_ADDR attr;
-	DEFT_ADDR data;
-	DEFT_ADDR srce;
-	DEFT_ADDR dest;
-};
 struct SystemNode {
 	NODE** list; // array of a node structure pointer
 	DEFT_ADDR size; // size of node_list
@@ -34,19 +28,16 @@ struct SystemNode {
 	bool   deleted;
 };
 
-typedef struct nodestruct {
-	NODEID      ndid;
-	SIMU      * simu;
-	void     (* func)(NODE*);
-	DEFT_WORD * attr;
-	VALUE     * data;
-	SIGNAL    * sent;
-	WIRE      * send;
-	struct NodeMemorySize size;
-} NODE;
+typedef struct silo_node_struct {
+	NODEID  nodeid;
+	void    (*gate)(NodeStruct*);
+	void    **data;
+	NodePort *port;
+} NodeStruct;
+
 typedef struct sendformat {
-	NODE * node;
-	PORTID port;
+	NODEID nodeid;
+	PORTID portid;
 } SENDFORM;
 
 

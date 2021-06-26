@@ -7,12 +7,22 @@
 #include "../include/simulator/simulator_in.h"
 #include "../include/simulator/thread.h"
 
-void SimuSendSignal(SENDFORM dest, SIGNAL signal) { dest.node->sent[dest.port] = signal; }
-void SimuWakeUpNode(NODE * node) { node->simu->simu.sentlist[node->ndid] = true; }
+// send the signal to the destination node.
+void SimuSendSignal(SENDFORM d, SIGNAL s) {
+	d.node->sent[d.port] = s;
+}
+void SimuWakeUpNode(NODE * n) {
+	n->simu->simu.sentlist[n->ndid] = true;
+}
 
+// transfer a signal to destination nodes
 void SimuTransfer(WIRE wire, SIGNAL signal) {
 	for (DEFT_WORD i = 0; i < wire.size; i++) {
-		SimuSendSignal(wire.send[i].node->send[wire.send[i].port], signal);
+		SimuSendSignal(wire.send[i], signal);
 		SimuWakeUpNode(wire.send[i].node);
 	}
+}
+
+void SignalSend(SendFormat d, Signal s) {
+	
 }

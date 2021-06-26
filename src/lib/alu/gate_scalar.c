@@ -6,38 +6,38 @@
 
 void GateADD(NODE * node) {
 	SIGNAL a, b, c;
-	a = node->srce[0];
-	b = node->srce[1];
+	a = node->sent[0];
+	b = node->sent[1];
 
 	c.value = a.value + b.value;
 	c.state = -1;
 	
-	SendSignal(node->dest[0], c);
+	SimuTransfer(node->send[0], c);
 }
 void GateSUB(NODE * node) {
 	SIGNAL a, b, c;
-	a = node->srce[0];
-	b = node->srce[1];
+	a = node->sent[0];
+	b = node->sent[1];
 
 	c.value = a.value - b.value;
 	c.state = -1;
 
-	SendSignal(node->dest[0], c);
+	SimuTransfer(node->send[0], c);
 }
 void GateMUL(NODE * node) {
 	SIGNAL a, b, c;
-	a = node->srce[0];
-	b = node->srce[1];
+	a = node->sent[0];
+	b = node->sent[1];
 
 	c.value = a.value * b.value;
 	c.state = -1;
 
-	SendSignal(node->dest[0], c);
+	SimuTransfer(node->send[0], c);
 }
 void GateDIV(NODE * node) {
 	SIGNAL a, b, c;
-	a = node->srce[0];
-	b = node->srce[1];
+	a = node->sent[0];
+	b = node->sent[1];
 	
 	if (b.value == 0) { // divide by zero exception
 		c.state = -1;
@@ -48,12 +48,12 @@ void GateDIV(NODE * node) {
 		c.value = a.value / b.value;
 	}
 
-	SendSignal(node->dest[0], c);
+	SimuTransfer(node->send[0], c);
 }
 void GateMOD(NODE * node) {
 	SIGNAL a, b, c;
-	a = node->srce[0];
-	b = node->srce[1];
+	a = node->sent[0];
+	b = node->sent[1];
 
 	if (b.value == 0) { // divide by zero exception
 		c.state = -1;
@@ -64,72 +64,72 @@ void GateMOD(NODE * node) {
 		c.value = a.value % b.value;
 	}
 
-	SendSignal(node->dest[0], c);
+	SimuTransfer(node->send[0], c);
 }
 void GateAND(NODE * node) {
 	SIGNAL a, b, c;
-	a = node->srce[0];
-	b = node->srce[1];
+	a = node->sent[0];
+	b = node->sent[1];
 
 	c.value = a.value & b.value;
 	c.state = -1;
 
-	SendSignal(node->dest[0], c);
+	SimuTransfer(node->send[0], c);
 }
 
 void GateIOR(NODE * node) {
 	SIGNAL a, b, c;
-	a = node->srce[0];
-	b = node->srce[1];
+	a = node->sent[0];
+	b = node->sent[1];
 
 	c.value = a.value | b.value;
 	c.state = -1;
 
-	SendSignal(node->dest[0], c);
+	SimuTransfer(node->send[0], c);
 }
 
 void GateEOR(NODE * node) {
 	SIGNAL a, b, c;
-	a = node->srce[0];
-	b = node->srce[1];
+	a = node->sent[0];
+	b = node->sent[1];
 
 	c.value = a.value ^ b.value;
 	c.state = -1;
 
-	SendSignal(node->dest[0], c);
+	SimuTransfer(node->send[0], c);
 }
 
 void GateBusyWait(NODE * node) {
     NODEID i = 0;
     while (i < 10)
         i++;
-    SendSignal(node->dest[0], node->srce[0]);
+	SimuTransfer(node->send[0], node->sent[0]);
 }
 
 
 void GateROL(NODE * node) {
 	SIGNAL a, b, c;
 	
-	a = node->srce[0];
-	b = node->srce[1];
+	a = node->sent[0];
+	b = node->sent[1];
 	
 	c.value = a.value << b.value;
 	c.state = -1;
 	
-	SendSignal(node->dest[0], c);
+	SimuTransfer(node->send[0], c);
 }
 void GateROR(NODE * node) {
 	SIGNAL a, b, c;
 	
-	a = node->srce[0];
-	b = node->srce[1];
+	a = node->sent[0];
+	b = node->sent[1];
 	
 	c.value = a.value >> b.value;
 	c.state = -1;
 	
-	SendSignal(node->dest[0], c);
+	SimuTransfer(node->send[0], c);
 }
 
 void GateBuffer(NODE * node) {
-	SendSignal(node->dest[0], node->srce[0]);
+	SimuTransfer(node->send[0], node->sent[0]);
 }

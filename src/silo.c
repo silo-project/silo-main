@@ -8,7 +8,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2020 SILO Project
+Copyright (c) 2021 SILO Project
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -24,41 +24,32 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 #include "include/define.h"
 #include "include/signal.h"
-#include "include/node/node.h"
-#include "include/node/node_type.h"
+#include "include/circuit/circuit.h"
 #include "include/simulator/simulator.h"
-#include "include/lib/alu/gate_scalar.h"
+//#include "include/lib/alu/gate_scalar.h"
 
 int main(int argc, char ** argv) {
-    int status = 0;
-    struct Simulator * simulator = SimuCreate();
-    if (simulator == NULL)
-        return -1;
-	status += NodeInit(simulator);
-    
-    if (status) {
-        printf("failed to initialization\n");
-        return -1;
-    }
+	int status = 0;
+
 	
-	NODEID thread_num;
-    NODEID node_num;
-    NODEID simu_num;
+	int thread_num;
+	int node_num;
+	int simu_num;
 	
 	printf("Input Thread Number : ");
-    fflush(stdout);
-	scanf("%lld", &thread_num);
+	fflush(stdout);
+	scanf("%d", &thread_num);
 
 	printf("Input Node Number : ");
-    fflush(stdout);
-	scanf("%lld", &node_num);
+	fflush(stdout);
+	scanf("%d", &node_num);
     
 	printf("Input Simulate Number : ");
-    fflush(stdout);
-	scanf("%lld", &simu_num);
-    
+	fflush(stdout);
+	scanf("%d", &simu_num);
 
-	
+
+/*
 	NODEID i;
 	SENDFORM s;
 	SIGNAL signal;
@@ -69,60 +60,59 @@ int main(int argc, char ** argv) {
 
 	signal.state = -1;
 	signal.value = 0xb7;
-    s.port = 0;
+	s.port = 0;
 	
 
 	if (SimuThreadSetNum(simulator, thread_num))
-        printf("error\n");
+	printf("error\n");
     
 	for (i = 0; i < node_num; i++) {
 		p = NodeCreate(simulator);
-        if (p == NULL)
-            return 1;
+		if (p == NULL)
+			return 1;
 		NodeSetType(p, GateBusyWait);
 		NodeSetMemSrce(p, 1);
 		NodeSetMemDest(p, 1);
 		
 		s.node = p;
 		NodeSetDest(p, 0, s);
-        
+	
 		printf("node created : %lld, pointer : %p\n", p->ndid, &p->ndid);
-        fflush(stdout);
+		fflush(stdout);
 	}
     
-    SimuReSize(simulator);
-    
-    for (i = 0; i < node_num; i++) {
-        p = NodeGetPtr(&simulator->node, i);
-        s.node = p;
-        if (rand()%2)
-            Transfer(s, signal);
-    }
+	for (i = 0; i < node_num; i++) {
+		p = NodeGetPtr(&simulator->node, i);
+		s.node = p;
+		if (rand()%2)
+		Transfer(s, signal);
+	}
     
 	printf("before simulate\n");
-    fflush(stdout);
+	fflush(stdout);
     
 	st = clock();
     
 	for (i = 0; i < simu_num; i++) {
         loop:
-        status = Simulate(simulator);
-        if (status) {
-            goto loop;
-        }
+		status = Simulate(simulator);
+		if (status) {
+			goto loop;
+		}
 //        SimuListofNextExec();
 		if (i / 1000 && (i % 1000 == 0)) {
-            printf("Thousand End : %d\n", ((int) i) / 1000);
-            fflush(stdout);
-        }
+			printf("Thousand End : %d\n", ((int) i) / 1000);
+			fflush(stdout);
+		}
 	}
 	printf("Simulate count : %d\n", (int)i);
-    fflush(stdout);
+	fflush(stdout);
 	
 	ed = clock();
 	printf("Time : %.3f\n", (float)(ed - st)/CLOCKS_PER_SEC);
-    fflush(stdout);
-	
+	fflush(stdout);
+*/
+
 	return 0;
 }
 

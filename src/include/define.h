@@ -18,10 +18,9 @@ typedef unsigned SILO_WORD DEFT_WORD;
 typedef unsigned SILO_ADDR DEFT_ADDR;
 
 typedef DEFT_WORD SIGNALSIZE;
-typedef DEFT_ADDR NODEID;
-typedef DEFT_ADDR PORTID;
-typedef DEFT_ADDR SIMUID;
+typedef unsigned int NODEID;
+typedef unsigned int PORTID;
 
-#define BASICMEM 4096 // 4KiB = 1Page
+#define BASICMEM 4096 // 4kiB = 1Page
 
 #endif

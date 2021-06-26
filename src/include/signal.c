@@ -29,3 +29,35 @@ VALUE SigChkTypeEdge(VALUE * prev, VALUE curr, VALUE type) {
     }
     return 1;
 }
+
+Signal * SignalCreate(size_t ss) {
+	Signal * sp = malloc(sizeof Signal);
+	if (!sp) return NULL;
+	
+	sp->base = malloc(ss);
+	sp->size = ss;
+	if (!sp->base) {
+		free(sp);
+		return NULL;
+	}
+
+	return sp;
+}
+int SignalDelete(Signal * sp) {
+	free(sp->base);
+	free(sp);
+	return 0;
+}
+Signal * SignalReSize(Signal * sp, size_t ss) {
+	return realloc(sp, ss);
+}
+void * SignalGetPtr(Signal * sp) { return sp->base; }
+size_t SignalGetSiz(Signal * sp) { return sp->size; }
+
+int SignalCopy(Signal * dp, Signal * sp) {
+	if (dp->type == sp->type)
+		*dp = *sp;
+	else
+		return -1;
+	return 0;
+}

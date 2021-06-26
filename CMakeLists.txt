@@ -6,20 +6,11 @@ set(PATH_LIB src/lib)
 
 add_subdirectory(src)
 
-add_library(
-    base
-    STATIC
-    ${PATH_LIB}/alu/gate_scalar.c
-    ${PATH_LIB}/Gates.c
-    ${PATH_LIB}/Memory.c
-)
-
-add_compile_options(-lpthread -g -O0)
+add_compile_options(-lpthread -g -O0 -std=c11 -fsyntax-only)
 
 
 
 target_link_libraries(
     silo
-    base
     pthread
 )
