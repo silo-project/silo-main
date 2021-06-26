@@ -1,0 +1,5 @@
+In file included from circuit_io.h:4:
+circuit.h:18:10: fatal error: ../wire.h: No such file or directory
+   18 | #include "../wire.h"
+      |          ^~~~~~~~~~~
+compilation terminated.
