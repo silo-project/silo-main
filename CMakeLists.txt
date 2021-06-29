@@ -6,8 +6,12 @@ set(PATH_LIB src/lib)
 
 add_subdirectory(src)
 
-add_compile_options(-lpthread -g -O0 -std=c11 -fsyntax-only)
+add_compile_options(-g -O0 -std=c11)
 
+add_library(
+	base
+	src/lib/base.c
+)
 
 
 target_link_libraries(

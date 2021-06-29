@@ -1,6 +1,9 @@
+#include <stdlib.h>
+#include <string.h>
 #include "define.h"
 #include "signal.h"
 
+/*
 VALUE SigGetFloat(SIGNAL signal) { return ~signal.value & ~signal.state; }
 VALUE SigGetError(SIGNAL signal) { return  signal.value & ~signal.state; }
 VALUE SigGetLogic(SIGNAL signal) { return  signal.value &  signal.state; }
@@ -51,13 +54,11 @@ int SignalDelete(Signal * sp) {
 Signal * SignalReSize(Signal * sp, size_t ss) {
 	return realloc(sp, ss);
 }
+*/
 void * SignalGetPtr(Signal * sp) { return sp->base; }
 size_t SignalGetSiz(Signal * sp) { return sp->size; }
 
 int SignalCopy(Signal * dp, Signal * sp) {
-	if (dp->type == sp->type)
-		*dp = *sp;
-	else
-		return -1;
+	memcpy(dp->base, sp->base, dp->size);
 	return 0;
 }

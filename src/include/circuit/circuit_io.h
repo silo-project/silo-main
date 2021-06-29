@@ -10,7 +10,7 @@ typedef struct silo_CircuitAddress SendTarget;
 // Input Port
 #ifndef SILO_DEFINED_PORT
 #define SILO_DEFINED_PORT
-typedef SendTarget CircuitPort_t;
+typedef Signal CircuitPort_t;
 #endif
 
 
@@ -20,15 +20,13 @@ typedef SendTarget CircuitPort_t;
 typedef struct silo_CircuitPO_Physical {
 	SendTarget *list;
 	enum PropagateState *stat;
-	int wiresize;
-	Signal signal;
+	int size;
 } CircuitWire_t;
 #endif
 
 // Propagation Processing
-void CircuitPropagate(Circuit *, PORTID, Signal *);
-void CircuitPropagateClear(Circuit *, PORTID);
-void CircuitPropagateProcess(CircuitWire_t *);
+void CircuitPropagate(CircuitWire_t *, Signal);
+void CircuitPropagateClear(Circuit *, int);
 
 
 

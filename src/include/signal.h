@@ -8,11 +8,7 @@
 typedef SIGNALSIZE VALUE;
 typedef SIGNALSIZE STATE;
 
-typedef struct silo_signal_class {
-	void * base; // starting data base
-	size_t size; // signal size
-	unsigned int type; // signal type
-} Signal;
+typedef struct DataVector Signal;
 
 typedef struct {
 	VALUE value;

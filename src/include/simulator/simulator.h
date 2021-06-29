@@ -16,7 +16,7 @@ struct SimulationTree {
 	struct ThreadSequence ** entrys;
 };
 
-int SimuInit(void);
+int SimuInit(int);
 int Simulate();
 int SimuSetState(struct SimulationTree *);
 

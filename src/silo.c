@@ -1,22 +1,3 @@
-/*
-	Name: SILO main
-	Copyright: SILO Project
-	Author: see AUTHOR file
-	Date: 10-10-20 09:09 (DD-MM-YY)
-	Description: SILO main function
-*/
-/*
-The MIT License (MIT)
-
-Copyright (c) 2021 SILO Project
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -25,8 +6,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #include "include/define.h"
 #include "include/signal.h"
 #include "include/circuit/circuit.h"
+#include "include/circuit/circuit_io.h"
 #include "include/simulator/simulator.h"
-//#include "include/lib/alu/gate_scalar.h"
+#include "include/simulator/thread.h"
+#include "include/lib/base.h"
 
 int main(int argc, char ** argv) {
 	int status = 0;
@@ -34,20 +17,67 @@ int main(int argc, char ** argv) {
 	
 	int thread_num;
 	int node_num;
-	int simu_num;
 	
 	printf("Input Thread Number : ");
 	fflush(stdout);
 	scanf("%d", &thread_num);
+	
+	
+	int i, j, k, n;
+	Circuit * circuit;
+	Circuit** clist;
+	CircuitPort_t cport;
+	CircuitWire_t cwire;
+	Signal     signal;
+	SendTarget target;
 
-	printf("Input Node Number : ");
-	fflush(stdout);
-	scanf("%d", &node_num);
-    
-	printf("Input Simulate Number : ");
-	fflush(stdout);
-	scanf("%d", &simu_num);
+	signal.size = sizeof(int);
+	signal.base = malloc(sizeof(int));
+	
+	*((int*)signal.base) = 0;
+	
+	clist = malloc(sizeof(Circuit *) * thread_num);
+	if (!clist) return -1;
+	
+	printf("EmptyGate Pointer : %p\n", EmptyGate);
+	for (i = 0; i < thread_num; i++) {
+		circuit = CircuitCreate();
+		clist[i] = circuit;
 
+		CircuitSetPtrGate(circuit, EmptyGate);
+		CircuitSetSizPort(circuit, 1);
+		CircuitSetSizWire(circuit, 1);
+
+		circuit->port = malloc(sizeof(CircuitPort_t*));
+		if (!circuit->port) return -1;
+		circuit->wire = malloc(sizeof(CircuitWire_t*));
+		if (!circuit->wire) return -1;
+	
+		circuit->port[0].base = malloc(sizeof(int));
+		if (!circuit->port[0].base) return -1;
+		circuit->port[0].size = sizeof(int);
+		*((int*)circuit->port[0].base) = 0;
+
+		circuit->wire[0].list = malloc(sizeof(SendTarget));
+		if (!circuit->wire[0].list) return -1;
+		circuit->wire[0].stat = malloc(sizeof(enum PropagateState));
+		if (!circuit->wire[0].stat) return -1;
+		circuit->wire[0].size = 1;
+		
+		circuit->wire[0].list[0].target = circuit;
+		circuit->wire[0].list[0].portid = 0;
+		circuit->wire[0].stat[0] = PROPSTAT_NULL;
+	}
+
+	if (SimuInit(thread_num) != 0)
+		fprintf(stderr, "warning: Init imcomplete.\n");
+	for (i = 0; i < thread_num; i++) {
+		ThreadAllocate(clist[i]);
+	}
+	puts("Simulation Start. 30 seconds.");
+	sleep(1);
+	Simulate();
+	sleep(30);
 
 /*
 	NODEID i;

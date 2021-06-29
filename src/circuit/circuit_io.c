@@ -4,18 +4,9 @@
 #include <stdbool.h>
 
 
-static CircuitPort * C_GetPtrPI(Circuit * t, PORTID i) {
-	return &t->port[i].i;
-}
-static CircuitPort * C_GetPtrPO(Circuit * t, PORTID i) {
-	return &t->port[i].o;
-}
-static CircuitPort * C_GetPtrPB(Circuit * t, PORTID i) {
-	return &t->port[i].b;
-}
+static enum PropagateState CircuitSignalSend(SendTarget, Signal);
 
-static enum PropagateState CircuitSignalSend(SendTarget *, Signal *);
-
+/*
 CircuitWire * CircuitWireCreate(size_t snum) {
 	CircuitWire * wire = malloc(sizeof(CircuitWire));
 	if (!wire) return NULL;
@@ -53,27 +44,23 @@ int CircuitPortSet(CircuitPort * Port, PORTID PortNumber, void * type;, int flag
 CircuitPort * CircuitPortReSize(CircuitPort * p, size_t s) {
 	return realloc(p, sizeof(CircuitPort) * s);
 }
+*/
 
-
-static enum PropagateState CircuitSignalSend(SendTarget * addr, Signal * sign) {
-	SignalCopy(C_GetPtrPI(addr->target, addr->portid), sign);
-	CircuitSyncSetCount(addr->target);
-	return (addr->target->lock == NULL) ? PROPSTAT_SEND : PROPSTAT_WAIT;
+static enum PropagateState CircuitSignalSend(SendTarget addr, Signal signal) {
+	SignalCopy(&addr.target->port[addr.portid], &signal);
+	return (!addr.target->lock) ? PROPSTAT_SEND : PROPSTAT_WAIT;
 }
 
 // send a signal to circuit
-void CircuitPropagate(Circuit * circuit, PORTID portnumber, Signal * s) {
+void CircuitPropagate(CircuitWire_t * wire, Signal signal) {
 	int i;
-	Circuit * next;
-	enum PropagateState PropStat;
-	
-	SignalCopy(circuit->port[portnumber].i, s);
+	Circuit * NextNode;
 
-	for (i = 0; (next = circuit->port[portnumber].o->list[i]) != NULL; i++) {
-		circuit->port[portnumber].o->stat[i] = CircuitSignalSend(next, circuit->port[portnumber].o->sign);
+	for (i = 0; i < wire->size; i++) {
+		wire->stat[i] = CircuitSignalSend(wire->list[i], signal);
 	}
 }
-void CircuitPropagateClear(Circuit * circuit, PORTID portnumber) {
-	for (int i = 0; i < circuit->wire[portnumber].wiresize; i++)
+void CircuitPropagateClear(Circuit * circuit, int portnumber) {
+	for (int i = 0; i < circuit->wire[portnumber].size; i++)
 		circuit->wire[portnumber].stat[i] = PROPSTAT_NULL;
 }

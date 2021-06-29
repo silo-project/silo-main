@@ -2,13 +2,17 @@
 #define SILO_SIMU_THREAD_H
 
 #include <stdlib.h>
+#include <pthread.h>
+#include <threads.h>
 
 #include "../circuit/circuit.h"
 
 enum ThreadRunState;
 enum ThreadBreakOut;
 
-struct ExecuteStack;
+struct ThreadArgument;
+struct ThreadSequence;
+struct ThreadNodeLock; // Thread Mutex and Condition Wait Struct;
 
 #ifndef SILO_DEFINED_ENUM_THREAD_RUNSTATE
 #define SILO_DEFINED_ENUM_THREAD_RUNSTATE
@@ -30,21 +34,37 @@ enum ThreadBreakOut {
 };
 #endif
 
+#ifndef SILO_DEFINED_STRUCT_THREAD_NODELOCK
+#define SILO_DEFINED_STRUCT_THREAD_NODELOCK
+struct ThreadNodeLock {
+	pthread_mutex_t mutex;
+	pthread_cond_t condv;
+};
+#endif
+
+#ifndef SILO_DEFINED_STRUCT_THREAD_ARGUMENT
+#define SILO_DEFINED_STRUCT_THREAD_ARGUMENT
 struct ThreadArgument {
-	struct silo_node_lock sync;
+	struct ThreadNodeLock lock;
 	Circuit * Next;
 	int TNum;
 	struct ThreadSequence * list;
-	
 	enum ThreadRunState RunState;
 	enum ThreadBreakOut BreakOut;
 };
+#endif
 
+#ifndef SILO_DEFINED_STRUCT_THREAD_SEQUENCE
+#define SILO_DEFINED_STRUCT_THREAD_SEQUENCE
 struct ThreadSequence {
 	Circuit ** entrys;
 	Circuit *  target;
 	struct ThreadSequence * nextsq;
 };
+#endif
+
+int ThreadInit(int thread_number);
+int ThreadAllocate(Circuit *);
 
 /* unused
 #ifndef SILO_DEFINED_EXECUTEQUEUE

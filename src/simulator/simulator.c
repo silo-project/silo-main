@@ -20,46 +20,29 @@
 #include "../include/simulator/thread.h"
 #include "../include/circuit/circuit.h"
 
-cnd_t SimuCnd;
-mtx_t SimuMtx;
+pthread_cond_t SimuCnd;
+pthread_mutex_t SimuMtx;
 
 static int SimuThreadMain(void *);
 
 // static inline void SimuThreadWait();
 // static inline void SimuThreadSignal();
 
-int SimuInit() {
-	int retstate;
-	retstate =  cnd_init(&SimuCnd);
-	retstate += mtx_init(&SimuMtx, mtx_plain);
-	ThreadInit(1);
-
-	return retstate;
+int SimuInit(int thread_number) {
+	int RetValue;
+	RetValue =  pthread_cond_init(&SimuCnd, NULL);
+	RetValue += pthread_mutex_init(&SimuMtx, NULL);
+	if (ThreadInit(thread_number)) return -1;
+	return RetValue?1:0;
 }
 
 int Simulate() {
-	int retv;
-	switch (retv = mtx_trylock(&SimuMtx)) {
-		case thrd_success:
-			mtx_lock(&SimuMtx);
-			break;
-		case thrd_error:
-			fprintf(stderr, "error.simulator: can't starting simulation, a thread is running.\n");
-			break;
-	}
-	cnd_broadcast(&SimuCnd);
-	mtx_unlock(&SimuMtx);
+	pthread_mutex_lock(&ThreadMtx);
+	pthread_cond_broadcast(&ThreadCnd);
+	pthread_mutex_unlock(&ThreadMtx);
+	puts("debug: broadcast");
 	return 0;
 }
-
-int BufferReSize(Circuit *** list, size_t * csize) {
-	*csize += BASICMEM;
-	void * p = realloc(*list, *csize);
-	if (!p) return -1;
-	list = p;
-	return 0;
-}
-#pragma clang diagnostic pop
 
 // Set Current Simulation Tree;
 int SimuSetState(struct SimulationTree * chip) {
