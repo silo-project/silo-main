@@ -8,7 +8,7 @@
 #include "../circuit/circuit.h"
 
 enum ThreadRunState;
-enum ThreadBreakOut;
+enum ThreadCommands; // sending command to thread from external;
 
 struct ThreadArgument;
 struct ThreadSequence;
@@ -25,12 +25,12 @@ enum ThreadRunState {
 };
 #endif
 
-#ifndef SILO_DEFINED_ENUM_THREAD_BREAKOUT
-#define SILO_DEFINED_ENUM_THREAD_BREAKOUT
-enum ThreadBreakOut {
-	BREAKOUT_NO = 0,
-	BREAKOUT_EXCEPT, // breakout if exception or error
-	BREAKOUT_DELETE, // breakout if setting thread number
+#ifndef SILO_DEFINED_ENUM_THREAD_COMMANDS
+#define SILO_DEFINED_ENUM_THREAD_COMMANDS
+enum ThreadCommands {
+	TCOMMAND_NOINST= 0, // no instruction
+	TCOMMAND_SETPTR, // set a new entry node;
+	TCOMMAND_DELETE, // exit regular
 };
 #endif
 
@@ -50,7 +50,7 @@ struct ThreadArgument {
 	int TNum;
 	struct ThreadSequence * list;
 	enum ThreadRunState RunState;
-	enum ThreadBreakOut BreakOut;
+	enum ThreadCommands TCommand;
 };
 #endif
 

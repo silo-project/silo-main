@@ -55,8 +55,7 @@ static void * ThreadMain(struct ThreadArgument * Args) {
 	
 	size_t NextExecSize = sizeof(Circuit*) * BASICMEM;
 	size_t WaitExecSize = sizeof(Circuit*) * BASICMEM;
-	
-	int isinit = 0;
+
 
 	Circuit ** NextExecList = malloc(NextExecSize);
 	if (!NextExecList) thrd_exit(1);
@@ -71,19 +70,26 @@ static void * ThreadMain(struct ThreadArgument * Args) {
 
 THREAD_STATUS_FIXING:
 	Args->RunState = RUNSTATE_WAIT;
-	fprintf(stderr, "Thread %d: Waiting Condition.\n", Args->TNum);
 	pthread_mutex_lock(&ThreadMtx);
 	pthread_cond_wait(&ThreadCnd, &ThreadMtx);
 	pthread_mutex_unlock(&ThreadMtx);
-
-	fprintf(stderr, "Thread %d: Start Processing.\n", Args->TNum);
-	if (Args->BreakOut != BREAKOUT_NO) goto THREAD_STATUS_TERMIN;
 	
-	if (!isinit) {
-		NextExecList[0] = Args->Next;
-		NextExecLast = 1;
-		isinit = 1;
+	switch (Args->TCommand)
+	{
+		case TCOMMAND_NOINST: // no instruction
+			break;
+		case TCOMMAND_SETPTR:
+			NextExecList[0] = Args->Next;
+			NextExecLast = 1;
+			break;
+		case TCOMMAND_DELETE:
+			goto THREAD_STATUS_TERMIN;
+			break;
+		default:
+			fprintf(stderr, "Thread %d: Unknown TCommand Number '%d'.\n", Args->TNum, Args->TCommand);
+			break;
 	}
+	Args->TCommand = TCOMMAND_NOINST;
 
 THREAD_STATUS_REPEAT:
 	Args->RunState = RUNSTATE_PREP;
@@ -269,6 +275,7 @@ int ThreadAllocate(Circuit * entry) {
 	ThreadArgs[i]->Next = entry;
 	*/
 	static int i = 0;
+	ThreadArgs[i]->TCommand = TCOMMAND_SETPTR;
 	ThreadArgs[i++]->Next = entry;
 	return 0;
 }
