@@ -12,8 +12,10 @@
 #include "../include/circuit/circuit.h"
 #include "../include/simulator/thread.h"
 
-static struct ThreadArgument **
-		 ThreadArgs;
+static void * T_NULLLIST = 0;
+const void * const ThreadNullList = (const void * const)&T_NULLLIST;
+
+static struct ThreadArgument ** ThreadArgs;
 static pthread_t ** ThreadTids;
 static int 	 ThreadNums;
 
@@ -25,15 +27,17 @@ pthread_mutex_t ThreadMtx;
 extern pthread_cond_t SimuCnd;
 extern pthread_mutex_t SimuMtx;
 
-
 static void * ThreadMain(struct ThreadArgument *);
+static void   ThreadCleanupHandler(struct ThreadArgument *);
+
 int  ThreadInit(int thread_number);
 static int  ThreadGetNum(void);
 static int  ThreadSetNum(int setnum);
-
-static void ThreadFreedom(int thnum);
-static int  ThreadNewTask(void);
+static int ThreadTaskCreate(struct ThreadSequence *);
 int  ThreadAllocate(Circuit *);
+
+static inline int isEquThreadIndex(int a, int b) { return a==b; }
+static inline void ExchangePointer(void ** d, void ** s) {void*t;t=*d;*d=*s;*s=t;}
 
 static int *  ThreadTaskList;
 static size_t ThreadTaskSize;
@@ -44,126 +48,133 @@ static pthread_mutex_t ThreadTMmtx; // thread task manager mutex
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
-static void * ThreadMain(struct ThreadArgument * Args) {
-	register int i, j;
-	int RetValue, CircuitRet;
-	enum PropagateState SendStat;
-	Circuit * NextNode;
-	int NextExecLast, NextExecPrev, WaitExecLast;
-
-	int BufferReSize(Circuit *** buffer, size_t * currentsize);
+static void * ThreadMain(struct ThreadArgument * Args)
+{	// Declaration for External
+	int RetValue;
 	
-	size_t NextExecSize = sizeof(Circuit*) * BASICMEM;
-	size_t WaitExecSize = sizeof(Circuit*) * BASICMEM;
+	// Setting Cleanup Handler
+	pthread_cleanup_push((void (*)(void*))ThreadCleanupHandler, (void*)Args);
+	
+	// Declaration for Internal
+	register long long i, j, k, l;
+	int CircuitRet;
+	Circuit * TargetNode;
+	CircuitWire_t * TargetWire;
 
+	struct ThreadExecuteStack *Prev, *Next, *Void, *Wait;
+	Prev = &Args->Prev;
+	Next = &Args->Next;
+	Void = &Args->Void;
+	Wait = &Args->Wait;
 
-	Circuit ** NextExecList = malloc(NextExecSize);
-	if (!NextExecList) thrd_exit(1);
-	Circuit ** WaitExecList = malloc(WaitExecSize);
-	if (!WaitExecList) thrd_exit(2);
-
-	NextExecLast = NextExecPrev = WaitExecLast = 0;
+	int BufferReSize(struct ThreadExecuteStack * sp);
+	
+	Prev->Size = Next->Size = Void->Size = Wait->Size = sizeof(Circuit*) * BASICMEM;
+	Prev->List = malloc(Prev->Size);
+	Next->List = malloc(Next->Size);
+	Void->List = malloc(Void->Size);
+	Wait->List = malloc(Wait->Size);
+	Prev->Last = Next->Last = Void->Last = Wait->Last = 0;
+	if (!Prev->List || !Next->List || !Void->List || !Wait->List) goto THREAD_STATUS_EXCEPT;
 	
 	pthread_mutex_lock(&ThreadTMmtx);
 	pthread_cond_signal(&ThreadTMcnd);
 	pthread_mutex_unlock(&ThreadTMmtx);
 
-THREAD_STATUS_FIXING:
-	Args->RunState = RUNSTATE_WAIT;
+THREAD_STATUS_FIXING: // It waits when the initialization process is over or there is no further work to be done.
 	pthread_mutex_lock(&ThreadMtx);
 	pthread_cond_wait(&ThreadCnd, &ThreadMtx);
 	pthread_mutex_unlock(&ThreadMtx);
 	
-	switch (Args->TCommand)
-	{
-		case TCOMMAND_NOINST: // no instruction
-			break;
-		case TCOMMAND_SETPTR:
-			NextExecList[0] = Args->Next;
-			NextExecLast = 1;
+	switch (Args->TCommand) {
+		case TCOMMAND_NOINST:
 			break;
 		case TCOMMAND_DELETE:
 			goto THREAD_STATUS_TERMIN;
-			break;
 		default:
-			fprintf(stderr, "Thread %d: Unknown TCommand Number '%d'.\n", Args->TNum, Args->TCommand);
 			break;
 	}
 	Args->TCommand = TCOMMAND_NOINST;
 
-THREAD_STATUS_REPEAT:
-	Args->RunState = RUNSTATE_PREP;
-	// 1. Execute All Circuit;
-	for (i = 0, CircuitRet = 0; i < NextExecLast; i++)
-		CircuitRet += CircuitExecute(NextExecList[i]) && 1; // Filter Boolean
+THREAD_STATUS_REPEAT: // Repeat after signal is transmitted and preparation process is complete.
+
+// 1. Execute All Circuit;
+	for (i = 0, CircuitRet = 0; i < Prev->Last; i++)
+		CircuitRet += CircuitExecute(Prev->List[i]) && 1; // Filter Boolean
 	if (CircuitRet) goto THREAD_STATUS_EXCEPT;
 
-	// 2. Filtering PropagateState
-	for (i = NextExecPrev = 0; i < NextExecLast; i++) {
-		NextNode = NextExecList[i];
-
-		for (j = 0; j < NextNode->wire[i].size; j++) {
-			switch (SendStat = NextNode->wire[i].stat[j]) {
-				case PROPSTAT_NULL: // Signal is not sent;
-					// then ignore;
-					break;
-				case PROPSTAT_SEND: // Signal is sent;
-					if (NextExecLast >= NextExecSize) BufferReSize(&NextExecList, &NextExecSize);
-					NextExecList[NextExecPrev++] = NextNode->wire[i].list[j].target;
-					break;
-				case PROPSTAT_WAIT: // Signal is sent, but the Target Circuit is have a critical section lock;
-					// WaitTNum is self;
-					if (NextNode->WaitTNum == Args->TNum) {
-						if (WaitExecLast >= WaitExecSize) BufferReSize(&WaitExecList, &WaitExecSize);
-						WaitExecList[WaitExecLast++] = NextNode->wire[i].list[j].target;
-					}
-					// WaitTNum is not self, then decrement sendcount;
-					else CircuitSyncSetCount(NextNode);
-					break;
-				default:
-					goto THREAD_STATUS_EXCEPT;
-			}
-			// Cleanup PropagateState
-			NextNode->wire[i].stat[j] = PROPSTAT_NULL;
-		}
+// 2. Filter PropStat;
+	// Index i = ThreadExecuteStack Prev
+	for (i = Next->Last = 0; i < Prev->Last; i++)
+	{ // Node Process ------->
+	TargetNode = Prev->List[i];
+	
+	// Index j = WirePropStat
+	for (j = 0; j < TargetNode->WireSize; j++)
+	{ // Wire Process ------->
+		if (BitfieldGet(TargetNode->WirePropStat, j) == true)
+		{
+	TargetWire = &TargetNode->Wire[j];
+	
+	// Index k = Wire.Stat
+	for (k = 0; k < TargetWire->Size; k++)
+	{	
+		// For each element
+		// PROPSTAT_WAIT
+		if (BitfieldGet(TargetWire->Stat, k))
+			Wait->List[Wait->Last++] = TargetWire->List[k].Target;
+		// PROPSTAT_SEND
+		else
+			Next->List[Next->Last++] = TargetWire->List[k].Target;
 	}
-	NextExecLast = NextExecPrev;
+		}
+		// For the whole
+		// If not send
+		else
+			Void->List[Void->Last++] = TargetWire->List[k].Target;
+	} // Wire Process <-------
+	
+	} // Node Process <-------
+	// Exchange Prev and Next each other;
+	ExchangePointer((void**)&Prev, (void**)&Next);
+
 	// If the NextExecList is not empty;
-	if (NextExecLast) goto THREAD_STATUS_REPEAT;
+	if (Prev->Last) goto THREAD_STATUS_REPEAT;
 	
-	// settings RunState = Wait;
-	Args->RunState = RUNSTATE_WAIT;
-	
-	// 3. Execute WaitExecList
-	for (i = CircuitRet = 0; i < WaitExecLast; i++)
-		CircuitRet += CircuitThreadWait(WaitExecList[i]) && 1; // Filter Boolean
+// 3. Execute WaitExecList
+	for (i = CircuitRet = 0; i < Wait->Last; i++)
+		CircuitRet += CircuitThreadWait(Wait->List[i]) && 1; // Filter Boolean
 	if (CircuitRet) goto THREAD_STATUS_EXCEPT;
 
-	// 4. flush buffer
-	WaitExecLast = 0;
+// 4. flush buffer
+	Wait->Last = 0;
 
-	// Set Thread Status Condition Wait;
 	goto THREAD_STATUS_FIXING;
 
-THREAD_STATUS_EXCEPT:
+THREAD_STATUS_EXCEPT: // A general exception occurred in the thread.
 	// setting global errors
 	RetValue = -1;
-THREAD_STATUS_TERMIN:
-	// cleanup code;
-	pthread_mutex_unlock(&SimuMtx);
+THREAD_STATUS_TERMIN: // Endpoint of Thread.
+	// Removing Cleanup Handler
+	pthread_cleanup_pop(0);
 
-	free(NextExecList);
-	free(WaitExecList);
 	pthread_exit(&RetValue);
 }
-inline int BufferReSize(Circuit *** list, size_t * csize) {
-	*csize += BASICMEM;
-	void * p = realloc(*list, *csize);
-	if (!p) return -1;
-	list = p;
-	return 0;
+static void ThreadCleanupHandler(struct ThreadArgument * Args) {
+// Cleanup for ExecuteStack;
+	if (Args->Prev.List) free(Args->Prev.List);
+	if (Args->Void.List) free(Args->Void.List);
+	if (Args->Next.List) free(Args->Next.List);
+	if (Args->Wait.List) free(Args->Wait.List);
 }
 #pragma clang diagnostic pop
+inline int BufferReSize(struct ThreadExecuteStack * sp) {
+	sp->Size += BASICMEM;
+	void * p = realloc(sp->List, sp->Size);
+	if (!p) return -1;
+	sp->List = p;
+	return 0;
+}
 
 int ThreadInit(int tnum) {
 	ThreadNums = 0;
@@ -174,7 +185,6 @@ int ThreadInit(int tnum) {
 	pthread_mutex_init(&ThreadTMmtx, NULL);
 	pthread_cond_init(&ThreadCnd, NULL);
 	pthread_mutex_init(&ThreadMtx, NULL);
-	if (!ThreadTids) return -1;
 	return 0;
 }
 
@@ -186,17 +196,16 @@ static int ThreadSetNum(int n) {
 	int idcnt; // increment or dec. count;
 	int RetValue;
 
-	if (n == 0) return -1;
-
 	if (ThreadRunState) {
 		fprintf(stderr, "경고 : 시뮬레이터가 실행중인 상태에서 스레드 개수를 변경하려고 시도. 무시됨.\n");
-		return 1;
+		return 0;
 	}
 	
 	// Mutex for Thread Initialization Stage.
 	pthread_mutex_lock(&ThreadTMmtx);
 
-	if (ThreadNums < n) { // create thread
+	if (ThreadNums < n) // Create Thread
+	{
 		p = realloc((void*)ThreadArgs, sizeof(struct ThreadArgument *) * n);
 		if (p) ThreadArgs = p; else return 0;
 
@@ -205,9 +214,8 @@ static int ThreadSetNum(int n) {
 
 		for (int i = ThreadNums, idcnt = 0; i < n; i++, idcnt++) {
 			ThreadArgs[i] = malloc(sizeof(struct ThreadArgument));
-			ThreadArgs[i]->TNum = i;
-			ThreadArgs[i]->RunState = RUNSTATE_WAIT;
-			ThreadArgs[i]->BreakOut = BREAKOUT_NO;
+			ThreadArgs[i]->Tidx = i;
+			ThreadArgs[i]->TCommand = TCOMMAND_NOINST;
 			ThreadTids[i] = malloc(sizeof(pthread_t));
 
 			pthread_create( ThreadTids[i], NULL, (void * (*)(void*))ThreadMain, (void*)ThreadArgs[i]);
@@ -218,9 +226,11 @@ static int ThreadSetNum(int n) {
 			fprintf(stderr, "alert: Thread Created, TNUM : %d, TIDS : %p\n", i, ThreadTids[i]);
 		}
 	}
-	else if (ThreadNums > n) { // delete thread
-		for (int i = n, idcnt = 0; i < ThreadNums; i++, idcnt--) {
-			ThreadArgs[i]->BreakOut = BREAKOUT_DELETE; // break out;
+	else if (ThreadNums > n) // Delete Thread
+	{
+		for (int i = n, idcnt = 0; i < ThreadNums; i++, idcnt--)
+		{
+			ThreadArgs[i]->TCommand = TCOMMAND_DELETE; // break out;
 			pthread_join(*ThreadTids[i], NULL);
 
 			//if (RetValue) goto threterr;
@@ -246,36 +256,13 @@ threterr:
 	return 0; // thread number is not change or error;
 }
 
-static void ThreadFreedom(int tnum) {
-	pthread_mutex_lock(&ThreadTMmtx);
-	if      (ThreadTaskLast <  ThreadTaskSize) ThreadTaskList[++ThreadTaskLast] = tnum;
-	else if (ThreadTaskLast >= ThreadTaskSize) {
-		pthread_mutex_unlock(&ThreadTMmtx);
-		int retv = ThreadSetNum(ThreadGetNum() + 1);
-		if (!retv) return; // set error;
-		
-	}
-	pthread_mutex_unlock(&ThreadTMmtx);
-}
-static int  ThreadNewTask(void) {
-	int tnum;
-	pthread_mutex_lock(&ThreadTMmtx);
-	if (ThreadTaskLast) {
-		tnum = ThreadTaskList[ThreadTaskLast--];
-		pthread_mutex_unlock(&ThreadTMmtx);
-		return tnum;
-	}
-	pthread_mutex_unlock(&ThreadTMmtx);
-	return -1;
+static int ThreadTaskCreate(struct ThreadSequence * seq) {
+
 }
 
 int ThreadAllocate(Circuit * entry) {
-	/*
-	int i = ThreadNewTask();
-	ThreadArgs[i]->Next = entry;
-	*/
 	static int i = 0;
-	ThreadArgs[i]->TCommand = TCOMMAND_SETPTR;
-	ThreadArgs[i++]->Next = entry;
+	ThreadArgs[i]->Prev.List[0] = entry;
+	ThreadArgs[i++]->Prev.Last = 1;
 	return 0;
 }

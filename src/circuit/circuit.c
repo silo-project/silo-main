@@ -41,124 +41,120 @@ Circuit * CircuitCreate() {
 	if (!circuit) return NULL;
 
 	//circuit->nodeid = nodeid;
-	circuit->gate = NULL;
-	circuit->data = NULL;
-	circuit->attr = NULL;
-	circuit->port = NULL;
-	circuit->wire = NULL;
-	circuit->lock = NULL;
+	circuit->Gate = NULL;
+	circuit->Data = NULL;
+	circuit->Attr = NULL;
+	circuit->Port = NULL;
+	circuit->Wire = NULL;
+	circuit->Wait = NULL;
 
-	circuit->dataSize = 0;
-	circuit->attrSize = 0;
-	circuit->portSize = 0;
-	circuit->wireSize = 0;
-
-	circuit->WaitTNum = -1;
-	circuit->sendcount = 0;
+	circuit->DataSize = 0;
+	circuit->AttrSize = 0;
+	circuit->PortSize = 0;
+	circuit->WireSize = 0;
 
 	return circuit;
 }
 void CircuitDelete(Circuit * circuit) {
 	int i;
 	
-	if (circuit->data) {
-		for (i = 0; i < circuit->dataSize; i++) {
-			if (circuit->data[i].base)
-				free(circuit->data[i].base);
+	if (circuit->Data) {
+		for (i = 0; i < circuit->DataSize; i++) {
+			if (circuit->Data[i].Base)
+				free(circuit->Data[i].Base);
 		}
-		free(circuit->data);
+		free(circuit->Data);
 	}
 	
-	if (circuit->port) {
-		for (i = 0; i < circuit->portSize; i++)
+	if (circuit->Port) {
+		for (i = 0; i < circuit->PortSize; i++)
 		{
-			if (circuit->port[i].base)
-				free(circuit->port[i].base);
+			if (circuit->Port[i].Base)
+				free(circuit->Port[i].Base);
 		}
-		free(circuit->port);
+		free(circuit->Port);
 	}
 
-	if (circuit->wire) {
-		for (i = 0; i < circuit->wireSize; i++)
+	if (circuit->Wire) {
+		for (i = 0; i < circuit->WireSize; i++)
 		{
-			if (circuit->wire[i].list)
-				free(circuit->wire[i].list);
-			if (circuit->wire[i].stat)
-				free(circuit->wire[i].stat);
+			if (circuit->Wire[i].List)
+				free(circuit->Wire[i].List);
+			if (circuit->Wire[i].Stat)
+				free(circuit->Wire[i].Stat);
 		}
-		free(circuit->wire);
+		free(circuit->Wire);
 	}
 	free(circuit);
 }
 
 // Get or Set a Circuit Type Property;
 //	Gate Functions
-CircuitGate_t   CircuitGetPtrGate(Circuit * circuit) { return circuit->gate; }
-void 		CircuitSetPtrGate(Circuit * circuit, CircuitGate_t gate) { circuit->gate = gate; }
+CircuitGate_t   CircuitGetPtrGate(Circuit * circuit) { return circuit->Gate; }
+void 		CircuitSetPtrGate(Circuit * circuit, CircuitGate_t gate) { circuit->Gate = gate; }
 //	Attr Functions
-CircuitAttr_t * CircuitGetPtrAttr(Circuit * circuit) { return circuit->attr; }
-void		CircuitSetPtrAttr(Circuit * circuit, CircuitAttr_t * attr) { circuit->attr = attr; }
+CircuitAttr_t * CircuitGetPtrAttr(Circuit * circuit) { return circuit->Attr; }
+void		CircuitSetPtrAttr(Circuit * circuit, CircuitAttr_t * attr) { circuit->Attr = attr; }
 //	Data Functions
-CircuitData_t * CircuitGetPtrData(Circuit * circuit) { return circuit->data; }
-void 		CircuitSetPtrData(Circuit * circuit, CircuitData_t * data) { circuit->data = data; }
+CircuitData_t * CircuitGetPtrData(Circuit * circuit) { return circuit->Data; }
+void 		CircuitSetPtrData(Circuit * circuit, CircuitData_t * data) { circuit->Data = data; }
 //	Port Functions (Circuit Signal Input)
-CircuitPort_t * CircuitGetPtrPort(Circuit * circuit) { return circuit->port; }
-void		CircuitSetPtrPort(Circuit * circuit, CircuitPort_t * port) { circuit->port = port; }
+CircuitPort_t * CircuitGetPtrPort(Circuit * circuit) { return circuit->Port; }
+void		CircuitSetPtrPort(Circuit * circuit, CircuitPort_t * port) { circuit->Port = port; }
 //	Wire Functions (Circuit Signal Output)
-CircuitWire_t * CircuitGetPtrWire(Circuit * circuit) { return circuit->wire; }
-void		CircuitSetPtrWire(Circuit * circuit, CircuitWire_t * wire) { circuit->wire = wire; }
+CircuitWire_t * CircuitGetPtrWire(Circuit * circuit) { return circuit->Wire; }
+void		CircuitSetPtrWire(Circuit * circuit, CircuitWire_t * wire) { circuit->Wire = wire; }
 
 // Get or Set a Circuit Type Size;
 //	Gate is not have Size;
 //	Attr Size;
-int CircuitGetSizAttr(Circuit * circuit) { return circuit->attrSize; }
+int CircuitGetSizAttr(Circuit * circuit) { return circuit->AttrSize; }
 int CircuitSetSizAttr(Circuit * circuit, int size) {
-	if (!ReAllocate((void**)&circuit->attr, size)) return -1;
-	circuit->attrSize = size;
+	if (!ReAllocate((void**)&circuit->Attr, size)) return -1;
+	circuit->AttrSize = size;
 	return 0;
 }
 //	Data Size;
-int CircuitGetSizData(Circuit * circuit) { return circuit->dataSize; }
+int CircuitGetSizData(Circuit * circuit) { return circuit->DataSize; }
 int CircuitSetSizData(Circuit * circuit, int size) {
-	if (!ReAllocate((void**)&circuit->data, size)) return -1;
-	circuit->dataSize = size;
+	if (!ReAllocate((void**)&circuit->Data, size)) return -1;
+	circuit->DataSize = size;
 	return 0;
 }
 //	Port Size;
-int CircuitGetSizPort(Circuit * circuit) { return circuit->portSize; }
+int CircuitGetSizPort(Circuit * circuit) { return circuit->PortSize; }
 int CircuitSetSizPort(Circuit * circuit, int size) {
-	if (!ReAllocate((void**)&circuit->port, size)) return -1;
-	circuit->portSize = size;
+	if (!ReAllocate((void**)&circuit->Port, size)) return -1;
+	circuit->PortSize = size;
 	return 0;
 }
 //	Wire Size;
-int CircuitGetSizWire(Circuit * circuit) { return circuit->wireSize; }
+int CircuitGetSizWire(Circuit * circuit) { return circuit->WireSize; }
 int CircuitSetSizWire(Circuit * circuit, int size) {
-	if (!ReAllocate((void**)&circuit->wire, size)) return -1;
-	circuit->wireSize = size;
+	if (!ReAllocate((void**)&circuit->Wire, size)) return -1;
+	circuit->WireSize = size;
 	return 0;
 }
 
 // Thread Sync
-void CircuitThreadSetLock(Circuit * circuit, struct ThreadNodeLock * lock) {
-	circuit->lock = lock;
-	CircuitThreadLock(circuit);
+void CircuitThreadSetLock(Circuit * circuit, struct ThreadWait * wait) {
+	circuit->Wait = wait;
 }
 
 inline void CircuitThreadLock(Circuit * circuit)
 {
-	pthread_mutex_lock(&circuit->lock->mutex);
+	pthread_mutex_lock(&circuit->Wait->Mutex);
 }
 inline void CircuitThreadUnlock(Circuit * circuit)
 {
-	pthread_mutex_unlock(&circuit->lock->mutex);
+	pthread_mutex_unlock(&circuit->Wait->Mutex);
 }
 
 int CircuitThreadWait(Circuit * circuit)
 {
 	CircuitThreadLock(circuit);
-	while (circuit->sendcount)
-		pthread_cond_wait(&circuit->lock->condv, &circuit->lock->mutex);
+	while (circuit->Wait->SendCount)
+		pthread_cond_wait(&circuit->Wait->Condv, &circuit->Wait->Mutex);
 	CircuitThreadUnlock(circuit);
 	return CircuitExecute(circuit);
 }
@@ -166,14 +162,14 @@ int CircuitThreadWait(Circuit * circuit)
 int CircuitSyncGetCount(Circuit * circuit)
 {
 	CircuitThreadLock(circuit);
-	int count = circuit->sendcount;
+	int count = circuit->Wait->SendCount;
 	CircuitThreadUnlock(circuit);
 	return count;
 }
 int CircuitSyncSetCount(Circuit * circuit)
 {
 	CircuitThreadLock(circuit);
-	int count = circuit->sendcount--;
+	int count = circuit->Wait->SendCount--;
 	CircuitThreadUnlock(circuit);
 	return count;
 }
@@ -181,5 +177,10 @@ int CircuitSyncSetCount(Circuit * circuit)
 // Circuit Execute
 inline int CircuitExecute(Circuit * circuit)
 {
-	return circuit->gate(circuit);
+	int RetValue = circuit->Gate(circuit);
+	// If Wait is not NULL
+	if (circuit->Wait) {
+		//
+	}
+	return RetValue;
 }

@@ -55,10 +55,10 @@ Signal * SignalReSize(Signal * sp, size_t ss) {
 	return realloc(sp, ss);
 }
 */
-void * SignalGetPtr(Signal * sp) { return sp->base; }
-size_t SignalGetSiz(Signal * sp) { return sp->size; }
+void * SignalGetPtr(Signal * sp) { return sp->Base; }
+size_t SignalGetSiz(Signal * sp) { return sp->Size; }
 
 int SignalCopy(Signal * dp, Signal * sp) {
-	memcpy(dp->base, sp->base, dp->size);
+	memcpy(dp->Base, sp->Base, dp->Size);
 	return 0;
 }

@@ -13,7 +13,7 @@
 #include "circuit_io.h"
 #include "../simulator/simulator.h"
 #include "../simulator/thread.h" // Internal Thread Header
-#include <threads.h> // Thread Header
+#include <pthread.h> // Thread Header
 
 typedef struct silo_CircuitStruct Circuit;
 
@@ -36,36 +36,32 @@ typedef const struct DataVector CircuitAttr_t;
 #ifndef SILO_DEFINED_CIRCUIT_STRUCT
 #define SILO_DEFINED_CIRCUIT_STRUCT
 typedef struct silo_CircuitStruct {
-	int  nodeid;
-	CircuitGate_t  gate;
+	int  Nodeid;
+	CircuitGate_t  Gate;
 	
-	CircuitAttr_t *attr;
-	int attrSize;
-	CircuitData_t *data;
-	int dataSize;
-
-	CircuitPort_t *port;
-	int portSize;
-	CircuitWire_t *wire; // Port Output
-	int wireSize;
-	struct ThreadNodeLock *lock;
-
-	int WaitTNum;
-	int sendcount;
+	// is not easter-egg, Strogg is not here.
+	int AttrSize, DataSize, PortSize, WireSize;
+	CircuitAttr_t *Attr;
+	CircuitData_t *Data;
+	CircuitPort_t *Port;
+	CircuitWire_t *Wire; // Port Output
+	unsigned * WirePropStat;
+	
+	// Parallel Processing Only;
+	struct ThreadWait *Wait;
 } Circuit;
 #endif
 
 #ifndef SILO_DEFINED_SENDTARGET
 #define SILO_DEFINED_SENDTARGET
 typedef struct silo_CircuitAddress {
-	Circuit * target;
-	PORTID    portid;
+	Circuit * Target;
+	PORTID    Portid;
 } SendTarget;
 #endif
 
-enum PropagateState {
-	PROPSTAT_NULL = 0, PROPSTAT_SEND, PROPSTAT_WAIT
-};
+#define PROPSTAT_SEND 0x0 // not exist Wait
+#define PROPSTAT_WAIT 0x1 // exist Wait
 
 
 // functions
@@ -110,7 +106,7 @@ int CircuitGetSizWire(Circuit *);
 int CircuitSetSizWire(Circuit *, int size);
 
 // Thread Synchronization
-void CircuitThreadSetLock(Circuit *, struct ThreadNodeLock *);
+void CircuitThreadSetLock(Circuit *, struct ThreadWait *);
 void CircuitThreadLock(Circuit *);
 void CircuitThreadUnlock(Circuit *);
 int  CircuitThreadWait(Circuit *);

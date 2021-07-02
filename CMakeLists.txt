@@ -13,8 +13,15 @@ add_library(
 	src/lib/base.c
 )
 
+add_library(
+	silostd
+	src/include/silostdlib.c
+)
+
 
 target_link_libraries(
     silo
+    silostd
+    base
     pthread
 )

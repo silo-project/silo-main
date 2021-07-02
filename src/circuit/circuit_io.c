@@ -3,64 +3,26 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-
-static enum PropagateState CircuitSignalSend(SendTarget, Signal);
-
-/*
-CircuitWire * CircuitWireCreate(size_t snum) {
-	CircuitWire * wire = malloc(sizeof(CircuitWire));
-	if (!wire) return NULL;
-
-	wire->list = malloc(sizeof(struct SendFormat  ) * snum);
-	wire->sent = malloc(sizeof(enum PropagateState) * snum);
-	if (!(wire->list||wire->sent)) {
-		if (!wire->list) free(wire->list);
-		if (!wire->sent) free(wire->sent);
-		free(wire);
-		return NULL;
-	}
-	wire->size = snum;
-	return wire;
-}
-int CircuitWireDelete(CircuitWire * wire) {
-	free(wire->list);
-	free(wire->sent);
-	free(wire);
-	return 0;
-}
-
-CircuitPort * CircuitPortCreate(size_t portsize) {
-	CircuitPort * p = malloc(sizeof(CircuitPort*) * portsize);
-	if (!p) return NULL;
-	return p;
-}
-
-int CircuitPortSet(CircuitPort * Port, PORTID PortNumber, void * type;, int flag) {
-	Port[PortNumber].port.p = type;
-	Port[PortNumber].flag = flag;
-	return 0;
-}
-
-CircuitPort * CircuitPortReSize(CircuitPort * p, size_t s) {
-	return realloc(p, sizeof(CircuitPort) * s);
-}
-*/
-
-static enum PropagateState CircuitSignalSend(SendTarget addr, Signal signal) {
-	SignalCopy(&addr.target->port[addr.portid], &signal);
-	return (!addr.target->lock) ? PROPSTAT_SEND : PROPSTAT_WAIT;
+static bool CircuitSignalSend(SendTarget addr, Signal s) {
+	SignalCopy(&addr.Target->Port[addr.Portid], &s);
+	// If exist WaitPoint
+	return addr.Target->Wait?PROPSTAT_WAIT:PROPSTAT_SEND;
 }
 
 // send a signal to circuit
-void CircuitPropagate(CircuitWire_t * wire, Signal signal) {
-	int i;
-	Circuit * NextNode;
-
-	for (i = 0; i < wire->size; i++) {
-		wire->stat[i] = CircuitSignalSend(wire->list[i], signal);
-	}
+void CircuitPropagate(Circuit * circuit, pindex_t portid, Signal signal) {
+	// Set WirePropStat to true;
+	BitfieldSet(circuit->WirePropStat, portid);
+	
+	// Sending Signal and Setting PropType;
+	for (int i = 0; i < circuit->Wire[portid].Size; i++)
+		 BitfieldSetValue(circuit->Wire[portid].Stat, i, CircuitSignalSend(circuit->Wire[portid].List[i], signal));
 }
-void CircuitPropagateClear(Circuit * circuit, int portnumber) {
-	for (int i = 0; i < circuit->wire[portnumber].size; i++)
-		circuit->wire[portnumber].stat[i] = PROPSTAT_NULL;
+void CircuitPropagateClear(Circuit * circuit) {
+	for (int i = 0; i < circuit->WireSize; i++)
+		BitfieldClr(circuit->WirePropStat, i);
+}
+
+void CircuitVoidSignal(CircuitWire_t * wire) {
+	// Sending a Void Signal;
 }

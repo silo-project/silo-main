@@ -31,10 +31,10 @@ int main(int argc, char ** argv) {
 	Signal     signal;
 	SendTarget target;
 
-	signal.size = sizeof(int);
-	signal.base = malloc(sizeof(int));
+	signal.Size = sizeof(int);
+	signal.Base = malloc(sizeof(int));
 	
-	*((int*)signal.base) = 0;
+	*((int*)signal.Base) = 0;
 	
 	clist = malloc(sizeof(Circuit *) * thread_num);
 	if (!clist) return -1;
@@ -48,25 +48,27 @@ int main(int argc, char ** argv) {
 		CircuitSetSizPort(circuit, 1);
 		CircuitSetSizWire(circuit, 1);
 
-		circuit->port = malloc(sizeof(CircuitPort_t*));
-		if (!circuit->port) return -1;
-		circuit->wire = malloc(sizeof(CircuitWire_t*));
-		if (!circuit->wire) return -1;
+		circuit->Port = malloc(sizeof(CircuitPort_t*));
+		if (!circuit->Port) return -1;
+		circuit->Wire = malloc(sizeof(CircuitWire_t*));
+		if (!circuit->Wire) return -1;
 	
-		circuit->port[0].base = malloc(sizeof(int));
-		if (!circuit->port[0].base) return -1;
-		circuit->port[0].size = sizeof(int);
-		*((int*)circuit->port[0].base) = 0;
+		circuit->Port[0].Base = malloc(sizeof(int));
+		if (!circuit->Port[0].Base) return -1;
+		circuit->Port[0].Size = sizeof(int);
+		*((int*)circuit->Port[0].Base) = 0;
 
-		circuit->wire[0].list = malloc(sizeof(SendTarget));
-		if (!circuit->wire[0].list) return -1;
-		circuit->wire[0].stat = malloc(sizeof(enum PropagateState));
-		if (!circuit->wire[0].stat) return -1;
-		circuit->wire[0].size = 1;
+		circuit->Wire[0].List = malloc(sizeof(SendTarget));
+		if (!circuit->Wire[0].List) return -1;
+		circuit->Wire[0].Stat = malloc(sizeof(unsigned) * (1%UINTBITCOUNT));
+		if (!circuit->Wire[0].Stat) return -1;
+		circuit->Wire[0].Size = 1;
 		
-		circuit->wire[0].list[0].target = circuit;
-		circuit->wire[0].list[0].portid = 0;
-		circuit->wire[0].stat[0] = PROPSTAT_NULL;
+		circuit->Wire[0].List[0].Target = circuit;
+		circuit->Wire[0].List[0].Portid = 0;
+		circuit->WirePropStat = malloc(sizeof(unsigned) * (1%UINTBITCOUNT));
+		if (!circuit->WirePropStat) return -1;
+		BitfieldClr(circuit->WirePropStat, 0);
 	}
 
 	if (SimuInit(thread_num) != 0)
@@ -75,7 +77,7 @@ int main(int argc, char ** argv) {
 		ThreadAllocate(clist[i]);
 	}
 	puts("Simulation Start. 30 seconds.");
-	sleep(1);
+	//sleep(1);
 	Simulate();
 	sleep(30);
 

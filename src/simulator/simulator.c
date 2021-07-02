@@ -45,6 +45,7 @@ int Simulate() {
 }
 
 // Set Current Simulation Tree;
+/*
 int SimuSetState(struct SimulationTree * chip) {
 	int i;
 	int tn;
@@ -52,9 +53,10 @@ int SimuSetState(struct SimulationTree * chip) {
 	for (i = 0; chip->entrys[i] != NULL; i++) {
 		tn = ThreadNewTask();
 		if (tn < 0) return -1;
-		ThreadArgs[tn]->Next = chip->entrys[i]->target;
+		ThreadArgs[tn]->Next = chip->entrys[i]->Target;
 	}
 }
+*/
 
 /* unused section
 static inline void SimuThreadWait() {

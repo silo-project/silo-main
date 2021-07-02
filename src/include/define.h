@@ -22,11 +22,27 @@ typedef DEFT_WORD SIGNALSIZE;
 typedef unsigned int NODEID;
 typedef unsigned int PORTID;
 
+typedef unsigned int nindex_t;
+typedef unsigned int pindex_t;
+
+typedef unsigned Bitfield_t;
+typedef unsigned Bitindex_t;
+
 struct DataVector {
-	void * base;
-	size_t size;
+	void * Base;
+	size_t Size;
 };
 
 #define BASICMEM 4096 // 4kiB = 1Page
+#define UINTBITCOUNT 32
+#define UINTBITSHIFT 5 // 1<<5 == 32;
+
+Bitfield_t* BitfieldAddress(Bitfield_t * b, Bitindex_t i);
+unsigned    BitfieldCalcula(Bitindex_t i);
+
+bool BitfieldGet(Bitfield_t * b, Bitindex_t i);
+bool BitfieldSet(Bitfield_t * b, Bitindex_t i);
+bool BitfieldClr(Bitfield_t * b, Bitindex_t i);
+bool BitfieldSetValue(Bitfield_t * b, Bitindex_t i, bool v);
 
 #endif

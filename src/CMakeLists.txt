@@ -3,7 +3,6 @@ add_executable(
 		silo.c
 		circuit/circuit.c
 		simulator/simulator.c
-		include/memalloc.c
 		include/signal.c
 		lib/base.c
 )

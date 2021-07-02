@@ -3,6 +3,6 @@
 #include "../include/lib/base.h"
 
 int EmptyGate(Circuit * self) {
-	CircuitPropagate(&self->wire[0], self->port[0]);
+	CircuitPropagate(self, 0, (Signal)self->Port[0]);
 	return 0;
 }

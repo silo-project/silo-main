@@ -18,16 +18,18 @@ typedef Signal CircuitPort_t;
 #ifndef SILO_DEFINED_WIRE
 #define SILO_DEFINED_WIRE
 typedef struct silo_CircuitPO_Physical {
-	SendTarget *list;
-	enum PropagateState *stat;
-	int size;
+	SendTarget *List;
+	Bitfield_t *Stat;
+	int Size;
 } CircuitWire_t;
 #endif
 
 // Propagation Processing
-void CircuitPropagate(CircuitWire_t *, Signal);
-void CircuitPropagateClear(Circuit *, int);
+void CircuitPropagate(Circuit *, pindex_t, Signal);
+void CircuitPropagateClear(Circuit *);
 
+// Send a logical signal, but not sending data;
+void CircuitVoidSignal(CircuitWire_t *);
 
 
 #endif
