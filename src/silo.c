@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "include/define.h"
 #include "include/signal.h"
@@ -11,17 +12,25 @@
 #include "include/simulator/thread.h"
 #include "include/lib/base.h"
 
+extern struct ThreadArgument ** ThreadArgs;
+
 int main(int argc, char ** argv) {
+	sigset(SIGUSR1, SIG_IGN);
 	int status = 0;
 
-	
-	int thread_num;
-	int node_num;
+	int thread_num, node_num, cycle_num;
 	
 	printf("Input Thread Number : ");
 	fflush(stdout);
 	scanf("%d", &thread_num);
 	
+	printf("Input Node Number : ");
+	fflush(stdout);
+	scanf("%d", &node_num);
+
+	printf("Input Cycle Number : ");
+	fflush(stdout);
+	scanf("%d", &cycle_num);
 	
 	int i, j, k, n;
 	Circuit * circuit;
@@ -30,17 +39,18 @@ int main(int argc, char ** argv) {
 	CircuitWire_t cwire;
 	Signal     signal;
 	SendTarget target;
+	clock_t beg, end;
 
 	signal.Size = sizeof(int);
 	signal.Base = malloc(sizeof(int));
 	
 	*((int*)signal.Base) = 0;
 	
-	clist = malloc(sizeof(Circuit *) * thread_num);
+	clist = malloc(sizeof(Circuit *) * (thread_num * node_num));
 	if (!clist) return -1;
 	
 	printf("EmptyGate Pointer : %p\n", EmptyGate);
-	for (i = 0; i < thread_num; i++) {
+	for (i = 0; i < thread_num * node_num; i++) {
 		circuit = CircuitCreate();
 		clist[i] = circuit;
 
@@ -73,13 +83,21 @@ int main(int argc, char ** argv) {
 
 	if (SimuInit(thread_num) != 0)
 		fprintf(stderr, "warning: Init imcomplete.\n");
-	for (i = 0; i < thread_num; i++) {
-		ThreadAllocate(clist[i]);
+
+	for (j = 0; j < thread_num; j++) {
+		ThreadArgs[j]->Prev.Last = node_num;
+		ThreadArgs[j]->maxcycle = cycle_num;
+		for (i = 0; i < node_num; i++)
+			ThreadArgs[j]->Prev.List[i] = clist[node_num * j + i];
 	}
 	puts("Simulation Start. 30 seconds.");
 	//sleep(1);
+	beg = clock();
 	Simulate();
-	sleep(30);
+	sleep(100);
+	end = clock();
+	
+	printf("Time : %.3f\n", (float)(end - beg)/CLOCKS_PER_SEC);
 
 /*
 	NODEID i;

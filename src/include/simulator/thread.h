@@ -10,6 +10,12 @@
 //enum ThreadRunState;
 enum ThreadCommands; // sending command to thread from external;
 
+// ThreadWaitType
+#define WT_DEFAULT 0x0
+#define WT_PREEMPTIVE 0x1
+#define WT_TERMINAL 0x2
+#define WT_NULL 0x4
+
 struct ThreadArgument;
 struct ThreadSequence;
 struct ThreadWait;
@@ -39,7 +45,7 @@ struct ThreadArgument {
 	pthread_cond_t  Condv;
 	void * Vptr;
 	int Tidx; // Thread Index, Not Confusing the pthread_t Type;
-
+	int maxcycle;
 	struct ThreadExecuteStack Prev, Next, Void, Wait;
 //	enum ThreadRunState RunState; useless for Multithreading
 	enum ThreadCommands TCommand;
@@ -53,11 +59,12 @@ struct ThreadWait {
 	pthread_cond_t  Condv;
 	int Tidx;
 	int SendCount;
+	unsigned TypeFlag;
 	unsigned ** NextEntrysType; // 0 == Normal, 1 == Target;
 };
 #endif
 
 int ThreadInit(int thread_number);
-int ThreadAllocate(Circuit *);
+//int ThreadAllocate(Circuit *);
 
 #endif

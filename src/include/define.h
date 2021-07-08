@@ -32,6 +32,10 @@ struct DataVector {
 	void * Base;
 	size_t Size;
 };
+struct VectorStruct {
+	size_t Size;
+	char   Base[];
+};
 
 #define BASICMEM 4096 // 4kiB = 1Page
 #define UINTBITCOUNT 32
@@ -44,5 +48,13 @@ bool BitfieldGet(Bitfield_t * b, Bitindex_t i);
 bool BitfieldSet(Bitfield_t * b, Bitindex_t i);
 bool BitfieldClr(Bitfield_t * b, Bitindex_t i);
 bool BitfieldSetValue(Bitfield_t * b, Bitindex_t i, bool v);
+
+// don't use, if using then the world is collapse;
+#ifdef SILO_IF_KARYL_HAD_BETRAYED
+typedef union Burst {
+	void VOID;
+} GrimBurst;
+Void = sizeof(GrimBurst);
+#endif
 
 #endif

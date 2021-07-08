@@ -29,7 +29,7 @@ enum SyntheticFlag {
 	SF_Warnings, // 0 == Ignore ALL warnings, 1 == Warning Enable, 2 == Warning To Error;
 	SF_Errors,
 	SF_Exception, // 0 == No Abort on errors, 1 == Abort on error;
-	SF_
+	SF_cLinkToNull // If Link is not exist
 };
 
 static int SynthFlagArray[SYNTHFLAGMAX];
@@ -69,6 +69,9 @@ int SyntDelTypes(FlowType_t typenum) {
 	else return -1;
 	DefNamesList[typenum] = NULL;
 	return typenum;
+}
+char * SyntGetTypes(FlowType_t t) {
+	return (t < DefNamesLast) ? DefNamesList[t]:(char*)NULL;
 }
 
 int SyntheInit(void) {
@@ -110,6 +113,18 @@ struct Chipwafer * SynthesizerBegin(struct Blueprint * bluep) {
 	int warnings, errors;
 
 	warnings = errors = 0;
+
+	switch (SynthFlagArray[SF_Warnings]) {
+		case 0: // IGNORE Warnings
+			break;
+		case 1:
+			SynthWarnings();
+			break;
+		case 2:
+			break;
+		default:
+			break;
+	}
 	
 	// Type Checking.
 	if (SynthFlagArray[SF_cTypeMisMatch]) {
@@ -139,6 +154,8 @@ struct Chipwafer * SynthesizerBegin(struct Blueprint * bluep) {
 			// no typemismatch
 		}
 	}
+
+
 	goto TERMINATE;
 EXCEPTION:
 	if (architecture)

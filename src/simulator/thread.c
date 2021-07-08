@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include <threads.h>
+#include <stdbool.h>
 
 #include "../include/define.h"
 #include "../include/signal.h"
@@ -15,7 +15,7 @@
 static void * T_NULLLIST = 0;
 const void * const ThreadNullList = (const void * const)&T_NULLLIST;
 
-static struct ThreadArgument ** ThreadArgs;
+struct ThreadArgument ** ThreadArgs;
 static pthread_t ** ThreadTids;
 static int 	 ThreadNums;
 
@@ -34,7 +34,6 @@ int  ThreadInit(int thread_number);
 static int  ThreadGetNum(void);
 static int  ThreadSetNum(int setnum);
 static int ThreadTaskCreate(struct ThreadSequence *);
-int  ThreadAllocate(Circuit *);
 
 static inline int isEquThreadIndex(int a, int b) { return a==b; }
 static inline void ExchangePointer(void ** d, void ** s) {void*t;t=*d;*d=*s;*s=t;}
@@ -121,8 +120,12 @@ THREAD_STATUS_REPEAT: // Repeat after signal is transmitted and preparation proc
 	{	
 		// For each element
 		// PROPSTAT_WAIT
-		if (BitfieldGet(TargetWire->Stat, k))
-			Wait->List[Wait->Last++] = TargetWire->List[k].Target;
+		if (BitfieldGet(TargetWire->Stat, k)) {
+			if (TargetNode->Wait->Tidx == Args->Tidx)
+				Wait->List[Wait->Last++] = TargetWire->List[k].Target;
+			else
+				CircuitSyncSetCount(TargetNode);
+		}
 		// PROPSTAT_SEND
 		else
 			Next->List[Next->Last++] = TargetWire->List[k].Target;
@@ -133,17 +136,28 @@ THREAD_STATUS_REPEAT: // Repeat after signal is transmitted and preparation proc
 		else
 			Void->List[Void->Last++] = TargetWire->List[k].Target;
 	} // Wire Process <-------
-	
+	// Reset WirePropStat
+	CircuitPropagateClear(TargetNode);
+
 	} // Node Process <-------
 	// Exchange Prev and Next each other;
 	ExchangePointer((void**)&Prev, (void**)&Next);
+	
+	if (!--Args->maxcycle) goto THREAD_STATUS_TERMIN; // for debugging
 
 	// If the NextExecList is not empty;
 	if (Prev->Last) goto THREAD_STATUS_REPEAT;
 	
 // 3. Execute WaitExecList
-	for (i = CircuitRet = 0; i < Wait->Last; i++)
-		CircuitRet += CircuitThreadWait(Wait->List[i]) && 1; // Filter Boolean
+	for (i = CircuitRet = 0; i < Wait->Last; i++) {
+		TargetNode = Wait->List[i];
+		if (TargetNode->Wait->TypeFlag & WT_PREEMPTIVE) {
+			CircuitThreadEnter(TargetNode);
+			CircuitRet += CircuitExecute(TargetNode) && 1; // Filter Boolean
+			CircuitThreadLeave(TargetNode);
+		}
+		else CircuitRet += CircuitThreadWait(TargetNode);
+	}
 	if (CircuitRet) goto THREAD_STATUS_EXCEPT;
 
 // 4. flush buffer
@@ -156,8 +170,8 @@ THREAD_STATUS_EXCEPT: // A general exception occurred in the thread.
 	RetValue = -1;
 THREAD_STATUS_TERMIN: // Endpoint of Thread.
 	// Removing Cleanup Handler
-	pthread_cleanup_pop(0);
-
+	pthread_cleanup_pop(true);
+	printf("Thread End.\n");
 	pthread_exit(&RetValue);
 }
 static void ThreadCleanupHandler(struct ThreadArgument * Args) {
@@ -260,9 +274,8 @@ static int ThreadTaskCreate(struct ThreadSequence * seq) {
 
 }
 
-int ThreadAllocate(Circuit * entry) {
-	static int i = 0;
+int ThreadAllocate(int i, Circuit * entry) {
 	ThreadArgs[i]->Prev.List[0] = entry;
-	ThreadArgs[i++]->Prev.Last = 1;
+	ThreadArgs[i]->Prev.Last = 1;
 	return 0;
 }

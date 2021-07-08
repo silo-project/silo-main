@@ -6,7 +6,7 @@
 static bool CircuitSignalSend(SendTarget addr, Signal s) {
 	SignalCopy(&addr.Target->Port[addr.Portid], &s);
 	// If exist WaitPoint
-	return addr.Target->Wait?PROPSTAT_WAIT:PROPSTAT_SEND;
+	return (addr.Target->Wait) ? PROPSTAT_WAIT:PROPSTAT_SEND;
 }
 
 // send a signal to circuit

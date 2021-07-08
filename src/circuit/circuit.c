@@ -141,46 +141,42 @@ void CircuitThreadSetLock(Circuit * circuit, struct ThreadWait * wait) {
 	circuit->Wait = wait;
 }
 
-inline void CircuitThreadLock(Circuit * circuit)
+inline void CircuitThreadEnter(Circuit * circuit)
 {
 	pthread_mutex_lock(&circuit->Wait->Mutex);
 }
-inline void CircuitThreadUnlock(Circuit * circuit)
+inline void CircuitThreadLeave(Circuit * circuit)
 {
 	pthread_mutex_unlock(&circuit->Wait->Mutex);
 }
 
 int CircuitThreadWait(Circuit * circuit)
 {
-	CircuitThreadLock(circuit);
+	CircuitThreadEnter(circuit);
 	while (circuit->Wait->SendCount)
 		pthread_cond_wait(&circuit->Wait->Condv, &circuit->Wait->Mutex);
-	CircuitThreadUnlock(circuit);
+	CircuitThreadLeave(circuit);
 	return CircuitExecute(circuit);
 }
 
 int CircuitSyncGetCount(Circuit * circuit)
 {
-	CircuitThreadLock(circuit);
+	CircuitThreadEnter(circuit);
 	int count = circuit->Wait->SendCount;
-	CircuitThreadUnlock(circuit);
+	CircuitThreadLeave(circuit);
 	return count;
 }
 int CircuitSyncSetCount(Circuit * circuit)
 {
-	CircuitThreadLock(circuit);
+	CircuitThreadEnter(circuit);
 	int count = circuit->Wait->SendCount--;
-	CircuitThreadUnlock(circuit);
+	if (!count) pthread_cond_signal(&circuit->Wait->Condv);
+	CircuitThreadLeave(circuit);
 	return count;
 }
 
 // Circuit Execute
 inline int CircuitExecute(Circuit * circuit)
 {
-	int RetValue = circuit->Gate(circuit);
-	// If Wait is not NULL
-	if (circuit->Wait) {
-		//
-	}
-	return RetValue;
+	return circuit->Gate(circuit);
 }

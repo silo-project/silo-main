@@ -25,13 +25,13 @@ struct GateNode {
 	size_t  * DataElementSize;
 	
 	FlowType_t * PortTypesPtr;
-	int LinkCountPtr;
+	Bitfield_t * PortisLinked;
 
 	FlowType_t * WireTypesPtr;
 };
 struct LinkWire {
 	struct GateNode *Source, *Destin;
-	int 		 IndexO,  IndexI; // Port Index(or Number) to node;
+	pindex_t IndexO,  IndexI; // Port Index(or Number) to node;
 };
 #endif
 
@@ -48,7 +48,8 @@ struct Blueprint {
 #ifndef SILO_DEFINED_CHIPWAFER
 #define SILO_DEFINED_CHIPWAFER
 struct Chipwafer {
-	struct ThreadExecuteEntry ** entrypoint;
+	struct ThreadExecuteEntry ** entryPoint;
+	Bitfield_t * entrysType;
 	long long maxresponse;
 
 	Circuit ** ClockPtr;

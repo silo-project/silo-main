@@ -45,7 +45,7 @@ typedef struct silo_CircuitStruct {
 	CircuitData_t *Data;
 	CircuitPort_t *Port;
 	CircuitWire_t *Wire; // Port Output
-	unsigned * WirePropStat;
+	Bitfield_t * WirePropStat;
 	
 	// Parallel Processing Only;
 	struct ThreadWait *Wait;
@@ -107,8 +107,8 @@ int CircuitSetSizWire(Circuit *, int size);
 
 // Thread Synchronization
 void CircuitThreadSetLock(Circuit *, struct ThreadWait *);
-void CircuitThreadLock(Circuit *);
-void CircuitThreadUnlock(Circuit *);
+void CircuitThreadEnter(Circuit *);
+void CircuitThreadLeave(Circuit *);
 int  CircuitThreadWait(Circuit *);
 
 int CircuitSyncGetCount(Circuit *);
@@ -117,6 +117,6 @@ int CircuitSyncSetCount(Circuit *);
 // circuit function call
 int CircuitExecute(Circuit *);
 
-#undef SILO_ADT_INLINING
+
 
 #endif
